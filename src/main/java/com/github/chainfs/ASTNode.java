@@ -23,19 +23,19 @@ import java.util.List;
  */
 public class ASTNode {
 
-    private String type;              // Node type, e.g., "IfStatement", "VariableDeclaration"
+    private String type; // Node type, e.g., "IfStatement", "VariableDeclaration"
 
-    private String value;             // Optional value, e.g., variable name, literal, operator
+    private String value; // Optional value, e.g., variable name, literal, operator
 
-    private List<ASTNode> children;  // Child nodes
+    private List<ASTNode> children; // Child nodes
 
     private ASTNode parent;
 
     private ASTNode root;
 
-    private List<ASTNode> directLine = new ArrayList<ASTNode>();  // line to/from root
+    private List<ASTNode> directLine = new ArrayList<ASTNode>(); // line to/from root
 
-    private String path = new String();  //path to/drom root
+    private String path = new String(); // path to/drom root
 
     public ASTNode(String type) {
         this(type, null);
@@ -47,8 +47,7 @@ public class ASTNode {
         this.children = new ArrayList<>();
     }
 
-    public ASTNode(String type, String value, ASTNode parent, ASTNode root,
-    		List<ASTNode> directLine, String path) {
+    public ASTNode(String type, String value, ASTNode parent, ASTNode root, List<ASTNode> directLine, String path) {
         this.type = type;
         this.value = value;
         this.children = new ArrayList<>();
@@ -58,38 +57,38 @@ public class ASTNode {
         this.path = path;
     }
 
-    public String getPath() {
-    	return path;
+    public String getPath(){
+        return path;
     }
 
-    public void addChild(ASTNode child) {
+    public void addChild(ASTNode child){
         children.add(child);
     }
 
-    public List<ASTNode> getChildren() {
+    public List<ASTNode> getChildren(){
         return children;
     }
 
-    public String getType() {
+    public String getType(){
         return type;
     }
 
-    public String getValue() {
+    public String getValue(){
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(String value){
         this.value = value;
     }
 
-    public void printTree(String indent) {
+    public void printTree(String indent){
         System.out.println(indent + type + (value != null ? ": " + value : ""));
         for (ASTNode child : children) {
             child.printTree(indent + "  ");
         }
     }
 
-    public void printTree() {
+    public void printTree(){
         printTree("");
     }
 }

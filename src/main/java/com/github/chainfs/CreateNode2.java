@@ -98,13 +98,16 @@ public class CreateNode2 {
 
     // @formatter:on
 
-    public static void main(String[] args){
-
+    public static void main(String[] args) {
         //BigInteger initialNodeCount = new BigInteger("9", 16);
         // @formatter:off
         BigInteger initialNodeCount = new BigInteger("1110001011001110" +
         		                                     "0011001110001100", 2);
         // @formatter:on
+    	process(initialNodeCount, null);
+    }
+
+    public static String process(BigInteger initialNodeCount, File file) {
 
         logger.info("initialNodeCount: " + initialNodeCount);
         logger.info("Bit length: " + initialNodeCount.bitLength());
@@ -208,6 +211,7 @@ public class CreateNode2 {
                 }
             }
         }
+        return currentGNode.getPath();
     }
 
     private static String getFSNodeName(ECPoint current){
