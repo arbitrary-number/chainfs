@@ -1,0 +1,65 @@
+Chainfs is a new generation filesystem that uses the security of the 
+secp256k1 algorithm combined with the double and add algorithm, to form
+the basis of the secure chainfs file system.  The filesystem uses an ASTTree
+structure for efficiency.
+
+Chainfs welcomes issue reports, suggestions and contributions under the 
+fork and pull request model
+
+Features:
+
+- Stores one file per g folder
+- Ability to store more files than the number of subatomic particles in the
+  universe  (2^256 files supported in g-mode)
+- Ability to store media files alongside the g-mode files in g-mode2
+- Global distributed redundancy built in along with fast access times to any file
+  and associated metadata
+- More redundancy than RAID systems
+- Each file gets its own special g node  (storing in g mode)
+- Universal distributed RAID redundancy provides a 100% guaranteed no data loss
+- Ability to locate photos and videos at dedicated g nodes (storing in g2mode).
+  Note that with g2mode, the parameters must include the g node number in addition
+  to the media file name
+- You can also store your favorite novels and ebooks securely in g2mode to prevent
+  them from being lost
+- The g nodes will be arranged in a double and add AST tree node for efficiency
+
+Planned features: maintain a second AST tree of incomplete nodes (pk AST tree)
+these are notes that are missing the g metadata files, with the tree leaves and 
+nodes based on the double and add algorithm using the public key number). These
+are also stored using the secure secp256k1 algorithm and the double and add method
+but note that the g metadata in this tree is incompatible with the g metadata
+in the g tree.
+A sync class will be created that syncs
+any nodes that match between the g tree and this new pk tree to complete the
+required chainfs metadata (x,y,y^2modp etc.).  This second AST tree can also be
+used for offline backup in case the internet goes down, and the data can be
+sent to your distributed backup systems to guard against data loss (similar to
+RAID systems, but with more features).  This will form the pk double and add
+AST tree.
+ 
+To store files in the system you must convert them to base p in numerical form
+and then use the StoreBaseP class so that each file will be stored at the correct
+node.  Even though it uses a folder per file, there are 2^256 folders available
+so even if you took all the files in the universe, it still wouldn't use up all
+the folders available in chainfs.
+
+Any files that have been stored in distributed mode but have missing g-mode metadata
+should be placed in pk AST tree until the data can be synched with the g AST 
+tree.
+
+Filesystem limits:
+
+Maximum folder count limit in chainfs: 2^256
+
+Standards based:
+
+Works with existing Linux tools:
+
+rsync - restore your chainfs from backups on your LAN, WAN, or from the internet
+      - may also be used to backup your chainfs to your LAN, WAN, or to the internet
+      - any new chainfs nodes will automatically be created in the correct places
+        in the fs ASTTrees
+scp   - can be used as an alternative to rsync
+find - find an existing file or metadata file
+ls - list your files
