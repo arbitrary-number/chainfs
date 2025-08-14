@@ -24,6 +24,7 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// @formatter:off
 /**
  * Creates the initial node: g, for chainfs, using the secure secp256k1 algorithm
  *
@@ -81,7 +82,12 @@ import org.slf4j.LoggerFactory;
  * ls - list your files
  *
  */
+// @formatter:on
 public class CreateNode2 {
+
+	// Must be set to true to prevent distributed file conflicts for
+	// file system integrity
+	private static final boolean BIDIRECTIONAL = true;
 
     private static final int BIT_LENGTH = 256;
 
@@ -96,18 +102,20 @@ public class CreateNode2 {
         new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" +
     	  	  		 "FFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
 
+	private static final String SEPERATOR = "_";
+
     // @formatter:on
 
-    public static void main(String[] args) {
-        //BigInteger initialNodeCount = new BigInteger("9", 16);
+    public static void main(String[] args){
+        // BigInteger initialNodeCount = new BigInteger("9", 16);
         // @formatter:off
         BigInteger initialNodeCount = new BigInteger("1110001011001110" +
         		                                     "0011001110001100", 2);
         // @formatter:on
-    	process(initialNodeCount, null);
+        process(initialNodeCount, null);
     }
 
-    public static String process(BigInteger initialNodeCount, File file) {
+    public static String process(BigInteger initialNodeCount, File file){
 
         logger.info("initialNodeCount: " + initialNodeCount);
         logger.info("Bit length: " + initialNodeCount.bitLength());
@@ -138,14 +146,14 @@ public class CreateNode2 {
         int gCount = 0;
         boolean firstOneFound = false;
         StringBuilder path = new StringBuilder();
-        ASTNode gTree = new ASTNode("g","infinity");
-        ASTNode pkTree = new ASTNode("pk","infinity");
+        ASTNode gTree = new ASTNode("g", "infinity");
+        ASTNode pkTree = new ASTNode("pk", "infinity");
         ASTNode currentGNode = gTree;
         ASTNode currentGNode2 = gTree;
         logger.info("Looping from " + BIT_LENGTH + " to 0");
         for (int i = BIT_LENGTH; i >= 1; i--) {
-            int bitIndex = i-1;
-			boolean isOne = initialNodeCount.testBit(bitIndex);
+            int bitIndex = i - 1;
+            boolean isOne = initialNodeCount.testBit(bitIndex);
             int bit = isOne ? 1 : 0;
             logger.info("i = " + i);
             logger.info("bitIndex = " + bitIndex);
@@ -157,9 +165,8 @@ public class CreateNode2 {
                     current = current.twice();
 
                     String currentPath = currentGNode.getPath();
-					String newPath = currentPath + "/" + gCount + "g";
-					ASTNode gChild = new ASTNode("gDouble", gCount + "g",
-                    		null, null, null, newPath);
+                    String newPath = currentPath + "/" + gCount + "g";
+                    ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null, newPath);
                     currentGNode.addChild(gChild);
                     currentGNode2 = currentGNode;
                     currentGNode = gChild;
@@ -168,10 +175,9 @@ public class CreateNode2 {
                     logger.info("Adding g to create fs node... (" + bit + ")");
                     current = current.add(G);
                     firstOneFound = true;
-                    path.append("/"+gCount+"g/");
+                    path.append("/" + gCount + "g/");
                     String newPath2 = currentGNode2.getPath() + "/" + gCount + "g";
-					ASTNode gChild2 = new ASTNode("gAdd", gCount + "g",
-                    		null, null, null, newPath2);
+                    ASTNode gChild2 = new ASTNode("gAdd", gCount + "g", null, null, null, newPath2);
                     currentGNode = gChild2;
                     currentGNode.addChild(gChild2);
                     createNode(256 - i, current, gCount, path.toString(), gChild2);
@@ -183,8 +189,7 @@ public class CreateNode2 {
                     logger.info(" New FS Node name = " + getFSNodeName(current));
                     firstOneFound = true;
                     path.append("/g/");
-                    ASTNode gChild = new ASTNode("gDouble", gCount + "g",
-                    		null, null, null, "/g");
+                    ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null, "/g");
                     gTree.addChild(gChild);
                     currentGNode = gChild;
                     createNode(256 - i, current, gCount, path.toString(), gChild);
@@ -200,9 +205,9 @@ public class CreateNode2 {
 
                     current = current.twice();
                     logger.info("New name after secure doubling =  " + getFSNodeName(current));
-                    path.append("/"+gCount+"g/");
-                    ASTNode gChild = new ASTNode("gDouble", gCount + "g",
-                    		null, null, null, currentGNode.getPath() + "/" + gCount + "g");
+                    path.append("/" + gCount + "g/");
+                    ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null,
+                            currentGNode.getPath() + "/" + gCount + "g");
                     currentGNode.addChild(gChild);
                     currentGNode = gChild;
                     createNode(256 - i, current, gCount, path.toString(), gChild);
@@ -230,60 +235,84 @@ public class CreateNode2 {
         return LHS.toString();
     }
 
-    static void createNode(int step, ECPoint point, int gCount, String path,
-    		ASTNode astNode) {
+    static void createNode(int step, ECPoint point, int gCount, String path, ASTNode astNode){
         point = point.normalize();
         String label = (step == -1) ? "Public Key" : "Step " + step;
         logger.info(label + ":");
         try {
             BigInteger xBigInteger = point.getAffineXCoord().toBigInteger();
-			String x = xBigInteger.toString(16);
-			logger.info("x = " + x);
-			BigInteger yBigInteger = point.getAffineYCoord().toBigInteger();
-            String y = yBigInteger.toString(16);
-			logger.info("y = " + y);
+            String xBeforeMod = xBigInteger.toString(16);
+            BigInteger xModP = xBigInteger.mod(p);
+			String x = xModP.toString(16);
+            logger.info("x = " + x);
+            BigInteger yBigInteger = point.getAffineYCoord().toBigInteger();
+            String yBeforeMod = yBigInteger.toString(16);
+            BigInteger yModP = yBigInteger.mod(p);
+			String y = yModP.toString(16);
+            logger.info("y = " + y);
             String dataDirectoryPath = GenerateChainFSStructure.getDataDirectoryPath();
             String newNode = null;
             if (astNode != null) {
-            	newNode = dataDirectoryPath + astNode.getPath() + "/";
+                newNode = dataDirectoryPath + astNode.getPath() + "/";
             }
-			newNode = newNode.replaceAll("\\\\", "/");
-			logger.info("Creating " + gCount + "g node at " + newNode);
+            newNode = newNode.replaceAll("\\\\", "/");
+            logger.info("Creating " + gCount + "g node at " + newNode);
             File newNodeFile = new File(newNode);
             boolean mkdirResult = newNodeFile.mkdirs();
-			logger.info("Mkdir result: " + mkdirResult);
+            logger.info("Mkdir result: " + mkdirResult);
             // Create the required fs metadata:
-            File publicKeyFile = new File(newNodeFile, x + y);
+            String publicKeyCoordinates = x + y;
+            String hexXY = NumberFormatUtils.concatXY(xModP, yModP, 32); // For secp256k1: 32 bytes
+            //store without "04" for performance reasons:
+            if (BIDIRECTIONAL) {
+            	PKTreeManager.process(new BigInteger(hexXY, 16), null,
+            		astNode.getPath(), false);
+            }
+			File publicKeyFile = new File(newNodeFile, "pkdec" +
+            		SEPERATOR + publicKeyCoordinates);
             publicKeyFile.createNewFile();
-            File publicKeyFile2 = new File(newNodeFile, "public_key-" + x + y);
+            File publicKeyFile2 = new File(newNodeFile, "public_key" +
+            		SEPERATOR + "04" + hexXY);
             publicKeyFile2.createNewFile();
-            File publicKeyFile3 = new File(newNodeFile, "pu-" + x + y);
+            File publicKeyFile3 = new File(newNodeFile, "pu" + SEPERATOR +
+            		hexXY);
             publicKeyFile3.createNewFile();
-            File publicKeyFile4 = new File(newNodeFile, "04" + x + y);
+            File publicKeyFile4 = new File(newNodeFile, hexXY);
             publicKeyFile4.createNewFile();
             File xFile = new File(newNodeFile, "x-" + x);
             xFile.createNewFile();
+            File xBeforeModPFile = new File(newNodeFile, "xbeforemod" +
+            		SEPERATOR + xBeforeMod);
+            xBeforeModPFile.createNewFile();
             // secure secp256k1 formula: y^2 mod p = (x ^ 3 + 7) mod p
             BigInteger LHS = yBigInteger.pow(2).mod(p);
             BigInteger RHS = xBigInteger.pow(3).add(SEVEN).mod(p);
             File yFile = new File(newNodeFile, "y-" + y);
             yFile.createNewFile();
-            File y2modpFile = new File(newNodeFile, "y2modp-" + LHS);
+            File yBeforeModPFile = new File(newNodeFile, "ybeforemod"
+            		+ SEPERATOR + yBeforeMod);
+            yBeforeModPFile.createNewFile();
+            File y2modpFile = new File(newNodeFile, "y2modp" +
+            		SEPERATOR + LHS);
             y2modpFile.createNewFile();
-            File x3p7modpFile = new File(newNodeFile, "x3p7modp-" + RHS);
+            File x3p7modpFile = new File(newNodeFile, "x3p7modp" +
+            		SEPERATOR + RHS);
             x3p7modpFile.createNewFile();
             File gFile = new File(newNodeFile, gCount + "g");
             gFile.createNewFile();
-            File gFile2 = new File(newNodeFile, "g-" + gCount);
+            File gFile2 = new File(newNodeFile, "g" +
+            		SEPERATOR + + gCount);
             gFile2.createNewFile();
-            File gFile3 = new File(newNodeFile, "private_key-" + gCount);
+            File gFile3 = new File(newNodeFile, "private_key" +
+            		SEPERATOR + gCount);
             gFile3.createNewFile();
-            File gFile4 = new File(newNodeFile, "pr-" + gCount);
+            File gFile4 = new File(newNodeFile, "pr" + SEPERATOR +
+            		gCount);
             gFile4.createNewFile();
             if (LHS.equals(RHS)) {
-            	logger.info("FS node successfully created on secure secp256k1 curve");
+                logger.info("FS node successfully created on secure secp256k1 curve");
             } else {
-            	logger.info("FS node not on secure secp256k1 curve");
+                logger.info("FS node not on secure secp256k1 curve");
             }
         } catch (Exception e) {
             logger.info("FS nodes shouldn't be created at infinity");

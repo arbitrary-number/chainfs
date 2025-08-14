@@ -1,12 +1,32 @@
-Chainfs is a new generation filesystem that uses the security of the 
+ChainFS is a new generation filesystem that uses the security of the
 secp256k1 algorithm combined with the double and add algorithm, to form
-the basis of the secure chainfs file system.  The filesystem uses an ASTTree
-structure for efficiency.
+the basis of the secure ChainFS file system. The filesystem uses two core AST Tree
+structures (g-tree and pk-tree) for efficiency, performance and security.
 
-Chainfs welcomes issue reports, suggestions and contributions under the 
+ChainFS welcomes issue reports, suggestions and contributions under the 
 fork and pull request model
 
-Features:
+Advanced Filesystem Features:
+
+- OverlayChainFS: Joins n ChainFS systems over your LAN, WAN or internet via ssh 
+  or the native OverlayChainFS protocol
+- Achieves O(log(N)) network performance for the G and PK trees including bidirectional
+  links between the numbered Sparse G AST folder tree (G, 1G, 2G ->2^256G) 
+  and the numbered Sparse PK AST folder tree (public key: pk1, pk2 etc. -> pk2^512) 
+  to ensure that your files don't conflict with other OverlayChainFS 
+  system users' files
+- Local ChainFS systems achieve better than O(log(N)) (achieves O(log((1))
+  performance with the g tree <-> pk tree (public key) bidirectional link files to
+  ensure that there aren't any conflicts with other users.
+- Features expert level O(log(1)) Modular Division and Modular Square Root to 
+  ensure that all aspects of the ChainFS and OverlayChainFS systems are validated,
+  including the Modular Multiplication.  Point Doubling is validated via the native
+  Point Halving system.
+- Features a validation and repair mechanism which utilizes Modular Mathematics
+  to repair any inconsistencies in both the ChainFS and OverlayChainFS systems.
+- Advanced file integrity checking mechanisms via the Modular Mathematics Module
+
+Standard Features:
 
 - Stores one file per g folder
 - Ability to store more files than the number of subatomic particles in the
