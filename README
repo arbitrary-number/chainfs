@@ -1,7 +1,7 @@
 ChainFS is a new generation filesystem that uses the security of the
 secp256k1 algorithm combined with the double and add algorithm, to form
-the basis of the secure ChainFS file system. The filesystem uses two core AST Tree
-structures (g-tree and pk-tree) for efficiency, performance and security.
+the basis of the secure ChainFS file system. The filesystem uses three core AST Tree
+structures (g-tree, pkx-tree, and pkx-tree) for efficiency, performance and security.
 
 ChainFS welcomes issue reports, suggestions and contributions under the 
 fork and pull request model
@@ -11,7 +11,8 @@ Advanced Filesystem Features:
 - OverlayChainFS: Joins n ChainFS systems over your LAN, WAN or internet via ssh 
   or the native OverlayChainFS protocol
 - Achieves O(log(N)) network performance for the G, PKx and PKy trees 
-  including bidirectional
+  including bidirectional Public Key <-> G Multiplier O(1) integrity and file 
+  conflict checks.
   links between the numbered Sparse G AST folder tree (G, 1G, 2G ->2^256G) 
   and the numbered Sparse PKx/y AST folder tree (public key: pkx1, pkx2 etc. ->
   pkx2^512) (public key: pky1, pky2 etc. -> pky2^512) 
@@ -19,6 +20,8 @@ Advanced Filesystem Features:
   system users' files
 - All intermediate G Point operation results stored in AST trees for enhanced
   filesystem integrity checking and validation (all G paths are known)
+- ChainFS filesystem natively maps the G Point Paths, viewable using the
+  standard Linux find command for enhanced filesystem repair capabilities.
 - Local ChainFS systems achieve better than O(log(N)) (achieves O(log((1))
   performance with the g tree <-> pk tree (public key) bidirectional link files to
   ensure that there aren't any conflicts with other users.

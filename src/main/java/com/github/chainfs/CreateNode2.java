@@ -255,7 +255,8 @@ public class CreateNode2 {
             String dataDirectoryPath = GenerateChainFSStructure.getDataDirectoryPath();
             String newNode = null;
             if (astNode != null) {
-                newNode = dataDirectoryPath + astNode.getPath() + "/";
+                String astNodePath = astNode.getPath();
+				newNode = dataDirectoryPath + astNodePath + "/";
             }
             newNode = newNode.replaceAll("\\\\", "/");
             logger.info("Creating " + gCount + "g node at " + newNode);
@@ -269,10 +270,17 @@ public class CreateNode2 {
             if (BIDIRECTIONAL) {
             	// x and y must be stored separately
             	// for compliance with the curve
-            	PKTreeManager.process(xModP, null,
-            		astNode.getPath(), false, "pkx");
-            	PKTreeManager.process(yModP, null,
-                		astNode.getPath(), false, "pky");
+            	String astNodePath2 = astNode.getPath();
+				String gLinkPointerX= "g_link_pointer_x_" +
+						astNodePath2.replaceAll("\\\\", "/")
+						.replaceAll("/", "_");
+				PKTreeManager.process(xModP, null,
+            		gLinkPointerX, false, "pkx");
+            	String gLinkPointerY = astNodePath2
+            			.replaceAll("\\\\", "/")
+            			.replaceAll("/", "_");
+				PKTreeManager.process(yModP, null,
+            		"g_link_pointer_y_" + gLinkPointerY, false, "pky");
             }
 			File publicKeyFile = new File(newNodeFile, "pkdec" +
             		SEPERATOR + publicKeyCoordinates);

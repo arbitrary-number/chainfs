@@ -96,7 +96,11 @@ public class PKTreeManager {
         ASTNode currentGNode = pkTree;
         ASTNode currentGNode2 = pkTree;
         logger.info("Looping from " + BIT_LENGTH + " to 0");
+        boolean last = false;
         for (int i = BIT_LENGTH; i >= 1; i--) {
+        	if (i == 1) {
+        		last = true;
+        	}
             int bitIndex = i - 1;
             boolean isOne = gMultiplier.testBit(bitIndex);
             int bit = isOne ? 1 : 0;
@@ -119,7 +123,8 @@ public class PKTreeManager {
                     currentGNode.addChild(gChild);
                     currentGNode2 = currentGNode;
                     currentGNode = gChild;
-                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose, label);
+                    createNode(256 - i, current, gCount, path.toString(),
+                    		gChild, verbose, label, gLinkPointer, last);
                     gCount = gCount.add(new BigInteger("1"));
                     if (verbose) {
                     	logger.info("Adding g to create fs node... (" + bit + ")");
@@ -131,7 +136,8 @@ public class PKTreeManager {
                     ASTNode gChild2 = new ASTNode("gAdd", gCount + label, null, null, null, newPath2);
                     currentGNode = gChild2;
                     currentGNode.addChild(gChild2);
-                    createNode(256 - i, current, gCount, path.toString(), gChild2, verbose, label);
+                    createNode(256 - i, current, gCount, path.toString(),
+                    		gChild2, verbose, label, gLinkPointer, last);
                 } else {
                 	gCount = gCount.add(new BigInteger("1"));
                     if (verbose) {
@@ -148,7 +154,8 @@ public class PKTreeManager {
                     		"/" + label);
                     pkTree.addChild(gChild);
                     currentGNode = gChild;
-                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose, label);
+                    createNode(256 - i, current, gCount, path.toString(),
+                    		gChild, verbose, label,  gLinkPointer, last);
                 }
             } else {
                 if (firstOneFound) {
@@ -171,7 +178,8 @@ public class PKTreeManager {
                             currentGNode.getPath() + "/" + gCount + label);
                     currentGNode.addChild(gChild);
                     currentGNode = gChild;
-                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose, label);
+                    createNode(256 - i, current, gCount, path.toString(),
+                    		gChild, verbose, label, gLinkPointer, false);
                 } else {
                 	if (verbose) {
                 		logger.info("Still at infinity: i = " + i);
@@ -199,7 +207,8 @@ public class PKTreeManager {
     }
 
     static void createNode(int step, ECPoint point, BigInteger gCount,
-    		String path, ASTNode astNode, boolean verbose, String label){
+    		String path, ASTNode astNode, boolean verbose, String label,
+    		String gLinkPointer, boolean last){
         point = point.normalize();
         String label2 = (step == -1) ? "Public Key" : "Step " + step;
         if (verbose) {
@@ -231,6 +240,12 @@ public class PKTreeManager {
             	logger.info("Mkdir result: " + mkdirResult);
             }
             // Create the required fs metadata:
+            if (last) {
+            	// create the gLinkPointer for the last one
+            	// link back to gTree for FS integrity
+                File gLinkFile = new File(newNodeFile, gLinkPointer);
+                gLinkFile.createNewFile();
+            }
             File publicKeyFile = new File(newNodeFile, x + y);
             publicKeyFile.createNewFile();
             File publicKeyFile2 = new File(newNodeFile, "public_key-" + x + y);
