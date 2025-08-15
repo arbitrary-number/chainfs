@@ -10,11 +10,15 @@ Advanced Filesystem Features:
 
 - OverlayChainFS: Joins n ChainFS systems over your LAN, WAN or internet via ssh 
   or the native OverlayChainFS protocol
-- Achieves O(log(N)) network performance for the G and PK trees including bidirectional
+- Achieves O(log(N)) network performance for the G, PKx and PKy trees 
+  including bidirectional
   links between the numbered Sparse G AST folder tree (G, 1G, 2G ->2^256G) 
-  and the numbered Sparse PK AST folder tree (public key: pk1, pk2 etc. -> pk2^512) 
+  and the numbered Sparse PKx/y AST folder tree (public key: pkx1, pkx2 etc. ->
+  pkx2^512) (public key: pky1, pky2 etc. -> pky2^512) 
   to ensure that your files don't conflict with other OverlayChainFS 
   system users' files
+- All intermediate G Point operation results stored in AST trees for enhanced
+  filesystem integrity checking and validation (all G paths are known)
 - Local ChainFS systems achieve better than O(log(N)) (achieves O(log((1))
   performance with the g tree <-> pk tree (public key) bidirectional link files to
   ensure that there aren't any conflicts with other users.

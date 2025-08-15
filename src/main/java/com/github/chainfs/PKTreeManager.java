@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 // @formatter:on
 public class PKTreeManager {
 
-    private static final int BIT_LENGTH = 512;
+    private static final int BIT_LENGTH = 256;
 
     private static final Logger logger = LoggerFactory.getLogger(PKTreeManager.class);
 
@@ -53,15 +53,16 @@ public class PKTreeManager {
         BigInteger initialNodeCount = new BigInteger("1110001011001110" +
         		                                     "0011001110001100", 2);
         // @formatter:on
-        process(initialNodeCount, null, null, true);
+        process(initialNodeCount, null, null, true, "pkx");
     }
 
-    public static String process(BigInteger initialNodeCount, File file
-    		, String gLinkPointer, boolean verbose){
+    public static String process(BigInteger gMultiplier, File file
+    		, String gLinkPointer, boolean verbose, String label){
 
+    	logger.info("Processing: " + gMultiplier);
     	if (verbose) {
-    		logger.info("initialNodeCount: " + initialNodeCount);
-    		logger.info("Bit length: " + initialNodeCount.bitLength());
+    		logger.info("initialNodeCount: " + gMultiplier);
+    		logger.info("Bit length: " + gMultiplier.bitLength());
     	}
         SecP256K1Curve curve = new SecP256K1Curve();
 
@@ -88,16 +89,16 @@ public class PKTreeManager {
         }
         ECPoint current = curve.getInfinity();
 
-        int gCount = 0;
+        BigInteger gCount = new BigInteger("0");
         boolean firstOneFound = false;
         StringBuilder path = new StringBuilder();
-        ASTNode pkTree = new ASTNode("pk", "infinity");
+        ASTNode pkTree = new ASTNode(label, "infinity");
         ASTNode currentGNode = pkTree;
         ASTNode currentGNode2 = pkTree;
         logger.info("Looping from " + BIT_LENGTH + " to 0");
         for (int i = BIT_LENGTH; i >= 1; i--) {
             int bitIndex = i - 1;
-            boolean isOne = initialNodeCount.testBit(bitIndex);
+            boolean isOne = gMultiplier.testBit(bitIndex);
             int bit = isOne ? 1 : 0;
             if (verbose) {
             	logger.info("i = " + i);
@@ -106,33 +107,33 @@ public class PKTreeManager {
             }
             if (isOne) {
                 if (firstOneFound) {
-                    gCount = gCount + gCount;
+                    gCount = gCount.add(gCount);
                     if (verbose) {
                     	logger.info("Doubling to create fs double node... (" + bit + ")");
                     }
                     current = current.twice();
 
                     String currentPath = currentGNode.getPath();
-                    String newPath = currentPath + "/" + gCount + "pk";
-                    ASTNode gChild = new ASTNode("gDouble", gCount + "pk", null, null, null, newPath);
+                    String newPath = currentPath + "/" + gCount + label;
+                    ASTNode gChild = new ASTNode("gDouble", gCount + label, null, null, null, newPath);
                     currentGNode.addChild(gChild);
                     currentGNode2 = currentGNode;
                     currentGNode = gChild;
-                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose);
-                    gCount++;
+                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose, label);
+                    gCount = gCount.add(new BigInteger("1"));
                     if (verbose) {
                     	logger.info("Adding g to create fs node... (" + bit + ")");
                     }
                     current = current.add(G);
                     firstOneFound = true;
                     path.append("/" + gCount + "g/");
-                    String newPath2 = currentGNode2.getPath() + "/" + gCount + "pk";
-                    ASTNode gChild2 = new ASTNode("gAdd", gCount + "pk", null, null, null, newPath2);
+                    String newPath2 = currentGNode2.getPath() + "/" + gCount + label;
+                    ASTNode gChild2 = new ASTNode("gAdd", gCount + label, null, null, null, newPath2);
                     currentGNode = gChild2;
                     currentGNode.addChild(gChild2);
-                    createNode(256 - i, current, gCount, path.toString(), gChild2, verbose);
+                    createNode(256 - i, current, gCount, path.toString(), gChild2, verbose, label);
                 } else {
-                    gCount++;
+                	gCount = gCount.add(new BigInteger("1"));
                     if (verbose) {
                     	logger.info("Adding g to create first fs node... (" + bit + ")");
                     	logger.info("FS Node before g node = " + getFSNodeName(current));
@@ -142,16 +143,16 @@ public class PKTreeManager {
                     	logger.info(" New FS Node name = " + getFSNodeName(current));
                     }
                     firstOneFound = true;
-                    path.append("/pk/");
-                    ASTNode gChild = new ASTNode("gDouble", gCount + "pk", null, null, null,
-                    		"/pk");
+                    path.append("/" + label + "/");
+                    ASTNode gChild = new ASTNode("gDouble", gCount + label, null, null, null,
+                    		"/" + label);
                     pkTree.addChild(gChild);
                     currentGNode = gChild;
-                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose);
+                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose, label);
                 }
             } else {
                 if (firstOneFound) {
-                    gCount = gCount + gCount;
+                    gCount = gCount.add(gCount);
                     String nodeName = getFSNodeName(current);
                     if (verbose) {
                     	logger.info("Node name =  " + nodeName);
@@ -166,11 +167,11 @@ public class PKTreeManager {
                     	logger.info("New name after secure doubling =  " + getFSNodeName(current));
                     }
                     path.append("/" + gCount + "g/");
-                    ASTNode gChild = new ASTNode("gDouble", gCount + "pk", null, null, null,
-                            currentGNode.getPath() + "/" + gCount + "pk");
+                    ASTNode gChild = new ASTNode("gDouble", gCount + label, null, null, null,
+                            currentGNode.getPath() + "/" + gCount + label);
                     currentGNode.addChild(gChild);
                     currentGNode = gChild;
-                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose);
+                    createNode(256 - i, current, gCount, path.toString(), gChild, verbose, label);
                 } else {
                 	if (verbose) {
                 		logger.info("Still at infinity: i = " + i);
@@ -197,12 +198,12 @@ public class PKTreeManager {
         return LHS.toString();
     }
 
-    static void createNode(int step, ECPoint point, int gCount,
-    		String path, ASTNode astNode, boolean verbose){
+    static void createNode(int step, ECPoint point, BigInteger gCount,
+    		String path, ASTNode astNode, boolean verbose, String label){
         point = point.normalize();
-        String label = (step == -1) ? "Public Key" : "Step " + step;
+        String label2 = (step == -1) ? "Public Key" : "Step " + step;
         if (verbose) {
-        	logger.info(label + ":");
+        	logger.info(label2 + ":");
         }
         try {
             BigInteger xBigInteger = point.getAffineXCoord().toBigInteger();

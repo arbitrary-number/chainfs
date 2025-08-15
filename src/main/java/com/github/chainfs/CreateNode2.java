@@ -115,10 +115,10 @@ public class CreateNode2 {
         process(initialNodeCount, null);
     }
 
-    public static String process(BigInteger initialNodeCount, File file){
+    public static String process(BigInteger gMultiplier, File file){
 
-        logger.info("initialNodeCount: " + initialNodeCount);
-        logger.info("Bit length: " + initialNodeCount.bitLength());
+        logger.info("gMultiplier: " + gMultiplier);
+        logger.info("Bit length: " + gMultiplier.bitLength());
 
         SecP256K1Curve curve = new SecP256K1Curve();
 
@@ -143,7 +143,7 @@ public class CreateNode2 {
         logger.info("Initializing initial node from infinity...");
         ECPoint current = curve.getInfinity();
 
-        int gCount = 0;
+        BigInteger gCount = new BigInteger("0");
         boolean firstOneFound = false;
         StringBuilder path = new StringBuilder();
         ASTNode gTree = new ASTNode("g", "infinity");
@@ -153,14 +153,14 @@ public class CreateNode2 {
         logger.info("Looping from " + BIT_LENGTH + " to 0");
         for (int i = BIT_LENGTH; i >= 1; i--) {
             int bitIndex = i - 1;
-            boolean isOne = initialNodeCount.testBit(bitIndex);
+            boolean isOne = gMultiplier.testBit(bitIndex);
             int bit = isOne ? 1 : 0;
             logger.info("i = " + i);
             logger.info("bitIndex = " + bitIndex);
             logger.info("bit = " + bit);
             if (isOne) {
                 if (firstOneFound) {
-                    gCount = gCount + gCount;
+                    gCount = gCount.add(gCount);
                     logger.info("Doubling to create fs double node... (" + bit + ")");
                     current = current.twice();
 
@@ -171,7 +171,7 @@ public class CreateNode2 {
                     currentGNode2 = currentGNode;
                     currentGNode = gChild;
                     createNode(256 - i, current, gCount, path.toString(), gChild);
-                    gCount++;
+                    gCount = gCount.add(new BigInteger("1"));
                     logger.info("Adding g to create fs node... (" + bit + ")");
                     current = current.add(G);
                     firstOneFound = true;
@@ -182,7 +182,7 @@ public class CreateNode2 {
                     currentGNode.addChild(gChild2);
                     createNode(256 - i, current, gCount, path.toString(), gChild2);
                 } else {
-                    gCount++;
+                    gCount = gCount.add(new BigInteger("1"));
                     logger.info("Adding g to create first fs node... (" + bit + ")");
                     logger.info("FS Node before g node = " + getFSNodeName(current));
                     current = current.add(G);
@@ -196,7 +196,8 @@ public class CreateNode2 {
                 }
             } else {
                 if (firstOneFound) {
-                    gCount = gCount + gCount;
+                    gCount = gCount.add(gCount);
+
                     String nodeName = getFSNodeName(current);
                     logger.info("Node name =  " + nodeName);
                     BigInteger currentTwo = new BigInteger(nodeName).multiply(TWO).mod(p);
@@ -235,7 +236,8 @@ public class CreateNode2 {
         return LHS.toString();
     }
 
-    static void createNode(int step, ECPoint point, int gCount, String path, ASTNode astNode){
+    static void createNode(int step, ECPoint point, BigInteger gCount,
+    		String path, ASTNode astNode){
         point = point.normalize();
         String label = (step == -1) ? "Public Key" : "Step " + step;
         logger.info(label + ":");
@@ -265,8 +267,12 @@ public class CreateNode2 {
             String hexXY = NumberFormatUtils.concatXY(xModP, yModP, 32); // For secp256k1: 32 bytes
             //store without "04" for performance reasons:
             if (BIDIRECTIONAL) {
-            	PKTreeManager.process(new BigInteger(hexXY, 16), null,
-            		astNode.getPath(), false);
+            	// x and y must be stored separately
+            	// for compliance with the curve
+            	PKTreeManager.process(xModP, null,
+            		astNode.getPath(), false, "pkx");
+            	PKTreeManager.process(yModP, null,
+                		astNode.getPath(), false, "pky");
             }
 			File publicKeyFile = new File(newNodeFile, "pkdec" +
             		SEPERATOR + publicKeyCoordinates);
@@ -301,7 +307,7 @@ public class CreateNode2 {
             File gFile = new File(newNodeFile, gCount + "g");
             gFile.createNewFile();
             File gFile2 = new File(newNodeFile, "g" +
-            		SEPERATOR + + gCount);
+            		SEPERATOR + gCount);
             gFile2.createNewFile();
             File gFile3 = new File(newNodeFile, "private_key" +
             		SEPERATOR + gCount);
