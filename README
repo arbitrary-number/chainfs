@@ -2,9 +2,21 @@ ChainFS is a new generation filesystem that uses the security of the
 secp256k1 algorithm combined with the double and add algorithm, to form
 the basis of the secure ChainFS file system.
 
-Important Note on Bitcoin, Ethereum, and USDT Secret Key Wallet Address to Secret Key Mapping Worker Processes
+Important Note on Bitcoin, Ethereum, and USDT Secret Key Wallet Address 
+to Secret Key Mapping Worker Processes
 
-This is necessary for G-Node collision detection purposes to make sure each G-Node used for every single, file, index and data storage item in the filesystem isn't already in use by a Secret Key wallet holder (since there is a 1-1 mapping between Secret Keys and G-Nodes).  However, since there are more secret key wallets available than Atoms in the Universe on the Elliptic Curve that Bitcoin, Ethereum and USDT share (as well as every single Ethereum token), this should not be a concern to anyone that it launches a background Bitcoin and Ethereum and USDT to Secret Key mapping worker than runs 24/7 continuously forever using the properties of the Elliptic curve to store the data, which then recursively requires more Bitcoin etc. <-> Secret Key address mapping work (for filesystem G-node collision detection).
+This is necessary for G-Node collision detection purposes to make sure 
+each G-Node used for every single, file, index and data storage item in 
+the filesystem isn't already in use by a Secret Key wallet holder (since 
+there is a 1-1 mapping between Secret Keys and G-Nodes).  However, since 
+there are more secret key wallets available than Atoms in the Universe 
+on the Elliptic Curve that Bitcoin, Ethereum and USDT share (as well as 
+every single Ethereum token), this should not be a concern to anyone that
+it launches a background Bitcoin and Ethereum and USDT to Secret Key mapping 
+worker than runs 24/7 continuously forever using the properties of the 
+Elliptic curve to store the data, which then recursively requires more
+Bitcoin etc. <-> Secret Key address mapping work (for filesystem G-node 
+collision detection).
 
 
 V2 Features:
