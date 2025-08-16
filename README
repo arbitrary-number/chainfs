@@ -1,6 +1,34 @@
 ChainFS is a new generation filesystem that uses the security of the
 secp256k1 algorithm combined with the double and add algorithm, to form
-the basis of the secure ChainFS file system.
+the basis of the secure ChainFS file system with built in 
+better-than-RAID redundancy, integrity checking and collision detection between the Infinity -> G-Node and the Infinity -> Satoshi-Node ECC Point
+AST Trees.  Features an ulta-scale O(1) persistent map implementation. Java is used for this proof-of-concept, which will then be ported to C for
+implementation as a new Linux O(1) filesystem based on g-nodes and s-nodes.
+
+Disclaimer
+
+This project is for educational and research purposes only. The authors are not responsible for any misuse or unethical activities performed using this tool.
+
+This project is intended solely for educational purposes to help individuals understand the principles of cryptography and blockchain technology. It is important to recognize that attempting to generate Bitcoin wallets in the hope of randomly finding one with a balance is not a feasible strategy. This same logic applies to any tool that tries to work in any way the same as this.
+
+The number of possible Bitcoin wallet combinations exceeds 76 trillion, making the odds of discovering an active wallet astronomically low. To put it into perspective, you are statistically far more likely to win the lottery every day for the rest of your life than to recover even a single wallet with funds—even over the course of a decade.
+
+File Integrity, Redundancy and G-Node <-> Satoshi-Node Collision Detection System
+
+New S-Node backup and collision detection created based on S-Nodes.  These
+S-Nodes are created from Satoshi Nakamoto's Point on the Curve instead
+of from the G-Node.  S-Nodes are the equivalent of Wallet Secret Keys
+but offset by (S-Node Point - G-Node Point).  This will result in faster
+collision detection than in the original system O(log n).  By achieving
+Order Log N search times, ChainFS now achieves high levels of data integrity
+protection in addition to fast access times.  In the event of a collision,
+ChainFS will calculate the G-Node value of the Satoshi Nakamoto Point through
+Subtraction (equivalent to the Satoshi Nakamoto Wallet Secret Key).  This
+will allow full cross-referencing between the G-Node tree and the S-Node
+(Satoshi-Node) backup tree.  Note that even though the collision system is
+Order Log N, because there are more Secret Key Wallets available and Satoshi
+Nodes than twice the number of Atoms in the Universe, the likelihood of 
+a collision is extremely small and the Curve remains 100% Secure.
 
 Important Note on Bitcoin, Ethereum, and USDT Secret Key Wallet Address 
 to Secret Key Mapping Worker Processes
@@ -17,7 +45,6 @@ worker than runs 24/7 continuously forever using the properties of the
 Elliptic curve to store the data, which then recursively requires more
 Bitcoin etc. <-> Secret Key address mapping work (for filesystem G-node 
 collision detection).
-
 
 V2 Features:
 
@@ -49,7 +76,6 @@ V2 Features:
   with a Bitcoin, Ethereum and USDT mapping process running 24/7 continuously forever, the
   chances of a collision are so low due to the endless availability of secret key wallet addresses
   (there are more wallet addresses available than grains of sand).
-  
 
 Advanced Filesystem Features:
 

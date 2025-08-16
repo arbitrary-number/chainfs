@@ -15,11 +15,17 @@
  */
 package com.github.chainfs.v2.map;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import com.github.chainfs.GenerateChainFSStructure;
+import com.github.chainfs.v4.InitParameters;
 
 public class NLPCommandLogManager {
 
@@ -58,9 +64,25 @@ public class NLPCommandLogManager {
 
     // === Append a command ===
     public synchronized void appendCommand(String command) throws IOException {
-        int fileNum = getWriteFileNumber();
-        int lineCount = getWriteLineCount();
 
+    	if (InitParameters.HIGH_SPEED_COLLISION_DETECTION) {
+    		if (command.indexOf("mapping from an x value of") == -1) {
+    			return;
+    		}
+    	}
+
+        int fileNum = 0;
+        int lineCount = 0;
+        try {
+        	fileNum = getWriteFileNumber();
+        } catch (IndexOutOfBoundsException e) {
+        	//continue, new file
+        }
+        try {
+        	lineCount = getWriteLineCount();
+        } catch (IndexOutOfBoundsException e) {
+        	//continue, new file
+        }
         Path file = getLogFile(fileNum);
         Files.writeString(file, command + System.lineSeparator(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 
