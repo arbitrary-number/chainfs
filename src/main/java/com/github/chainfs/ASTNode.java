@@ -15,8 +15,11 @@
  */
 package com.github.chainfs;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.bouncycastle.math.ec.ECPoint;
 
 /**
  * The primary data structure used in chainfs
@@ -33,7 +36,27 @@ public class ASTNode {
 
     private ASTNode root;
 
-    private List<ASTNode> directLine = new ArrayList<ASTNode>(); // line to/from root
+    private BigInteger gCount;
+
+    private ECPoint ecPoint;
+
+    public ECPoint getEcPoint() {
+		return ecPoint;
+	}
+
+	public void setEcPoint(ECPoint ecPoint) {
+		this.ecPoint = ecPoint;
+	}
+
+	public BigInteger getgCount() {
+		return gCount;
+	}
+
+	public void setgCount(BigInteger gCount) {
+		this.gCount = gCount;
+	}
+
+	private List<ASTNode> directLine = new ArrayList<ASTNode>(); // line to/from root
 
     private String path = new String(); // path to/drom root
 

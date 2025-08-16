@@ -51,26 +51,29 @@ public class GenerateChainFSStructure {
         }
     }
 
-    public static String getDataDirectoryPath() throws IOException{
+    public static String getDataDirectoryPath() {
         Map<String, String> env = System.getenv();
         String os = System.getProperty("os.name").toLowerCase();
 
         String baseDir;
 
-        if (os.contains("win")) {
-            String userProfile = env.get("USERPROFILE");
-            if (userProfile == null) {
-                throw new IOException("Environment variable USERPROFILE is not set");
-            }
-            baseDir = userProfile + LOCAL_SHARE_DATA_SECP256K1;
-        } else {
-            String home = env.get("HOME");
-            if (home == null) {
-                throw new IOException("Environment variable HOME is not set");
-            }
-            baseDir = home + LOCAL_SHARE_DATA_SECP256K1;
+        try {
+	        if (os.contains("win")) {
+	            String userProfile = env.get("USERPROFILE");
+	            if (userProfile == null) {
+	                throw new IOException("Environment variable USERPROFILE is not set");
+	            }
+	            baseDir = userProfile + LOCAL_SHARE_DATA_SECP256K1;
+	        } else {
+	            String home = env.get("HOME");
+	            if (home == null) {
+	                throw new IOException("Environment variable HOME is not set");
+	            }
+	            baseDir = home + LOCAL_SHARE_DATA_SECP256K1;
+	        }
+        } catch (Exception e) {
+        	throw new IllegalStateException(e);
         }
-
         return baseDir;
     }
 }

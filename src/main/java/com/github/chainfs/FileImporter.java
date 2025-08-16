@@ -40,7 +40,7 @@ public class FileImporter {
             if (file.getName().matches("^(.*?)")) {
                 logger.info("Importing: file.getAbsolutePath()");
                 BigInteger gNum = convertToBigInteger(file.getName());
-                String directory = CreateNode2.process(gNum, file);
+                String directory = CreateNode2.process(gNum, file).getPath();
                 try {
                     String prefix = GenerateChainFSStructure.getDataDirectoryPath();
                     File directoryFile = new File(prefix + directory + "/");

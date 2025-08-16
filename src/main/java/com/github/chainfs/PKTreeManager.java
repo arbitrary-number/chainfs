@@ -56,7 +56,7 @@ public class PKTreeManager {
         process(initialNodeCount, null, null, true, "pkx");
     }
 
-    public static String process(BigInteger gMultiplier, File file
+    public static ASTNode process(BigInteger gMultiplier, File file
     		, String gLinkPointer, boolean verbose, String label){
 
     	logger.info("Processing: " + gMultiplier);
@@ -118,12 +118,12 @@ public class PKTreeManager {
                     current = current.twice();
 
                     String currentPath = currentGNode.getPath();
-                    String newPath = currentPath + "/" + gCount + label;
-                    ASTNode gChild = new ASTNode("gDouble", gCount + label, null, null, null, newPath);
+                    String newPath = currentPath + "/" + gCount + "g";
+                    ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null, newPath);
                     currentGNode.addChild(gChild);
                     currentGNode2 = currentGNode;
                     currentGNode = gChild;
-                    createNode(256 - i, current, gCount, path.toString(),
+                    createNode(256 - i, current, gCount, null,
                     		gChild, verbose, label, gLinkPointer, last);
                     gCount = gCount.add(new BigInteger("1"));
                     if (verbose) {
@@ -132,8 +132,8 @@ public class PKTreeManager {
                     current = current.add(G);
                     firstOneFound = true;
                     path.append("/" + gCount + "g/");
-                    String newPath2 = currentGNode2.getPath() + "/" + gCount + label;
-                    ASTNode gChild2 = new ASTNode("gAdd", gCount + label, null, null, null, newPath2);
+                    String newPath2 = currentGNode2.getPath() + "/" + gCount + "g";
+                    ASTNode gChild2 = new ASTNode("gAdd", gCount + "g", null, null, null, newPath2);
                     currentGNode = gChild2;
                     currentGNode.addChild(gChild2);
                     createNode(256 - i, current, gCount, path.toString(),
@@ -149,9 +149,9 @@ public class PKTreeManager {
                     	logger.info(" New FS Node name = " + getFSNodeName(current));
                     }
                     firstOneFound = true;
-                    path.append("/" + label + "/");
-                    ASTNode gChild = new ASTNode("gDouble", gCount + label, null, null, null,
-                    		"/" + label);
+                    //path.append("/g");
+                    ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null,
+                    		"/g");
                     pkTree.addChild(gChild);
                     currentGNode = gChild;
                     createNode(256 - i, current, gCount, path.toString(),
@@ -174,8 +174,8 @@ public class PKTreeManager {
                     	logger.info("New name after secure doubling =  " + getFSNodeName(current));
                     }
                     path.append("/" + gCount + "g/");
-                    ASTNode gChild = new ASTNode("gDouble", gCount + label, null, null, null,
-                            currentGNode.getPath() + "/" + gCount + label);
+                    ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null,
+                            currentGNode.getPath() + "/" + gCount + "g");
                     currentGNode.addChild(gChild);
                     currentGNode = gChild;
                     createNode(256 - i, current, gCount, path.toString(),
@@ -187,7 +187,7 @@ public class PKTreeManager {
                 }
             }
         }
-        return currentGNode.getPath();
+        return currentGNode;
     }
 
     private static String getFSNodeName(ECPoint current){
@@ -225,7 +225,8 @@ public class PKTreeManager {
             if (verbose) {
             	logger.info("y = " + y);
             }
-            String dataDirectoryPath = GenerateChainFSStructure.getDataDirectoryPath();
+            String dataDirectoryPath = GenerateChainFSStructure.getDataDirectoryPath()
+            		+ "/pfx";
             String newNode = null;
             if (astNode != null) {
                 newNode = dataDirectoryPath + astNode.getPath() + "/";
@@ -243,8 +244,10 @@ public class PKTreeManager {
             if (last) {
             	// create the gLinkPointer for the last one
             	// link back to gTree for FS integrity
-                File gLinkFile = new File(newNodeFile, gLinkPointer);
-                gLinkFile.createNewFile();
+            	if ("!false".equals(gLinkPointer)) {
+            		File gLinkFile = new File(newNodeFile, gLinkPointer);
+            		gLinkFile.createNewFile();
+            	}
             }
             File publicKeyFile = new File(newNodeFile, x + y);
             publicKeyFile.createNewFile();
@@ -283,6 +286,7 @@ public class PKTreeManager {
             	}
             }
         } catch (Exception e) {
+        	e.printStackTrace();
             logger.info("FS nodes shouldn't be created at infinity");
         }
     }

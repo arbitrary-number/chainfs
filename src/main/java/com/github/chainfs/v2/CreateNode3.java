@@ -13,7 +13,7 @@
  *
  * Copyright (c) Arbitrary Project Team. All rights reserved.
  */
-package com.github.chainfs;
+package com.github.chainfs.v2;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -23,6 +23,11 @@ import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.chainfs.ASTNode;
+import com.github.chainfs.GenerateChainFSStructure;
+import com.github.chainfs.NumberFormatUtils;
+import com.github.chainfs.PKTreeManager;
 
 // @formatter:off
 /**
@@ -83,8 +88,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 // @formatter:on
-@Deprecated
-public class CreateNode2 {
+public class CreateNode3 {
 
 	// Must be set to true to prevent distributed file conflicts for
 	// file system integrity
@@ -92,7 +96,7 @@ public class CreateNode2 {
 
     private static final int BIT_LENGTH = 256;
 
-    private static final Logger logger = LoggerFactory.getLogger(CreateNode2.class);
+    private static final Logger logger = LoggerFactory.getLogger(CreateNode3.class);
 
     private static final BigInteger TWO = new BigInteger("2");
 
@@ -103,15 +107,17 @@ public class CreateNode2 {
         new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" +
     	  	  		 "FFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
 
-	private static final String SEPERATOR = "_";
+	private static final boolean PROCESS_PK_TREES = false;
 
     // @formatter:on
 
     public static void main(String[] args){
         // BigInteger initialNodeCount = new BigInteger("9", 16);
         // @formatter:off
-        BigInteger initialNodeCount = new BigInteger("1110001011001110" +
-        		                                     "0011001110001100", 2);
+        BigInteger initialNodeCount = new BigInteger("2047");
+        //"aa9a3e43e57a4cd717991c959f9fc40c43aa2667e16ea169d9f8310670af15ce", 16);
+        //"1110001011001110" +
+        		                                     //"0011001110001100", 2);
         // @formatter:on
         process(initialNodeCount, null);
     }
@@ -150,7 +156,7 @@ public class CreateNode2 {
                     current = current.twice();
 
                     String currentPath = currentGNode.getPath();
-                    String newPath = currentPath + "/" + gCount + "g";
+                    String newPath = currentPath + "/" + gCount.toString(36) + "g";
                     ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null, newPath);
                     currentGNode.addChild(gChild);
                     currentGNode2 = currentGNode;
@@ -161,7 +167,7 @@ public class CreateNode2 {
                     current = current.add(G);
                     firstOneFound = true;
                     path.append("/" + gCount + "g/");
-                    String newPath2 = currentGNode2.getPath() + "/" + gCount + "g";
+                    String newPath2 = currentGNode2.getPath() + "/" + gCount.toString(36) + "g";
                     ASTNode gChild2 = new ASTNode("gAdd", gCount + "g", null, null, null, newPath2);
                     currentGNode = gChild2;
                     currentGNode.addChild(gChild2);
@@ -191,9 +197,9 @@ public class CreateNode2 {
 
                     current = current.twice();
                     logger.info("New name after secure doubling =  " + getFSNodeName(current));
-                    path.append("/" + gCount + "g/");
+                    path.append("/" + gCount.toString(36) + "g/");
                     ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null,
-                            currentGNode.getPath() + "/" + gCount + "g");
+                            currentGNode.getPath() + "/" + gCount.toString(36) + "g");
                     currentGNode.addChild(gChild);
                     currentGNode = gChild;
                     createNode(256 - i, current, gCount, path.toString(), gChild);
@@ -248,10 +254,8 @@ public class CreateNode2 {
             File newNodeFile = new File(newNode);
             boolean mkdirResult = newNodeFile.mkdirs();
             logger.info("Mkdir result: " + mkdirResult);
-            // Create the required fs metadata:
-            String publicKeyCoordinates = x + y;
-            String hexXY = NumberFormatUtils.concatXY(xModP, yModP, 32); // For secp256k1: 32 bytes
-            //store without "04" for performance reasons:
+            // The following code creates the metadata files:
+            String publicKeyInHexadecimalForm = NumberFormatUtils.concatXY(xModP, yModP, 32); // For secp256k1: 32 bytes
             if (BIDIRECTIONAL) {
             	// x and y must be stored separately
             	// for compliance with the curve
@@ -259,62 +263,159 @@ public class CreateNode2 {
 				String gLinkPointerX= "g_link_pointer_x_" +
 						astNodePath2.replaceAll("\\\\", "/")
 						.replaceAll("/", "_");
-				PKTreeManager.process(xModP, null,
-            		gLinkPointerX, true, "pkx");
-            	String gLinkPointerY = astNodePath2
-            			.replaceAll("\\\\", "/")
-            			.replaceAll("/", "_");
-				PKTreeManager.process(yModP, null,
-            		"g_link_pointer_y_" + gLinkPointerY, true, "pky");
+				if (PROCESS_PK_TREES) {
+					PKTreeManager.process(xModP, null,
+	            		gLinkPointerX, true, "pkx");
+	            	String gLinkPointerY = astNodePath2
+	            			.replaceAll("\\\\", "/")
+	            			.replaceAll("/", "_");
+					PKTreeManager.process(yModP, null,
+	            		"g_link_pointer_y_" + gLinkPointerY, true, "pky");
+				}
             }
-			File publicKeyFile = new File(newNodeFile, "pkdec" +
-            		SEPERATOR + publicKeyCoordinates);
-            publicKeyFile.createNewFile();
-            File publicKeyFile2 = new File(newNodeFile, "public_key" +
-            		SEPERATOR + "04" + hexXY);
+
+
+            File commandPath =
+            		new File(new File(
+        					GenerateChainFSStructure.getDataDirectoryPath(), "/g"),
+            				"commands to process");
+            new File(commandPath,
+            		"create a mapping from an x value of " +
+            		x +
+            		" back to the g-node value of " + gCount)
+            		.createNewFile();
+
+            String uncompressedBitcoinAddress = "04" + publicKeyInHexadecimalForm;
+			File publicKeyFile2 = new File(newNodeFile,
+            		SafeFilename.makeSafe("The Bitcoin Public Key for this node in uncompressed form is " +
+            		uncompressedBitcoinAddress + ".", true));
             publicKeyFile2.createNewFile();
-            File publicKeyFile3 = new File(newNodeFile, "pu" + SEPERATOR +
-            		hexXY);
+            String command = "create a mapping from an address value of " +
+				uncompressedBitcoinAddress +
+				" back to the g-node value of " + gCount;
+            logger.info("command = " + command);
+			File command1 = new File(commandPath, command);
+			if (!command1.exists()) {
+				command1.createNewFile();
+			}
+            String compressedBitcoinAddress =
+            		BitcoinPublicKeyCompressor.compressPublicKey(uncompressedBitcoinAddress);
+			File publicKeyFile3 = new File(newNodeFile,
+            		SafeFilename.makeSafe("The Bitcoin Public Key for this node in compressed form is " +
+            		compressedBitcoinAddress + ".", true));
             publicKeyFile3.createNewFile();
-            File publicKeyFile4 = new File(newNodeFile, hexXY);
+            new File(commandPath,
+            		"create a mapping from an address value of " +
+            		compressedBitcoinAddress +
+            		" back to the g-node value of " + gCount)
+            		.createNewFile();
+            File gValue = new File(newNodeFile,
+            		SafeFilename.makeSafe("The G value and Private Key for this node is " +
+            		gCount + ".", false));
+            gValue.createNewFile();
+            File gValueGematria = new File(newNodeFile,
+            		SafeFilename.makeSafe("The G value and Private Key for this node in Gematria is " +
+            		EncodingUtils.decodeGematria(String.valueOf(gCount)) + ".", false));
+            gValueGematria.createNewFile();
+            File file = new File(newNodeFile,
+            		SafeFilename.makeSafe("The G value and Private Key for this node in Reverse Gematria is " +
+            		EncodingUtils.decodeReverseGematria(String.valueOf(gCount)) + ".", false));
+            file.createNewFile();
+            File gValueHebrewGematria = new File(newNodeFile,
+            		SafeFilename.makeSafe("The G value and Private Key for this node in Hebrew Gematria is " +
+            		EncodingUtils.decodeHebrewGematria(String.valueOf(gCount)) + ".", false));
+            gValueHebrewGematria.createNewFile();
+            File publicKeyFile4 = new File(newNodeFile, "The concatenated value of x and y " +
+            		"for this node is " + publicKeyInHexadecimalForm);
             publicKeyFile4.createNewFile();
-            File xFile = new File(newNodeFile, "x-" + x);
+            File xFile = new File(newNodeFile, "The value of x for this node is " + x);
             xFile.createNewFile();
-            File xBeforeModPFile = new File(newNodeFile, "xbeforemod" +
-            		SEPERATOR + xBeforeMod);
+            File xBeforeModPFile = new File(newNodeFile, "The value of x for this node before applying mod p is  " +
+            		xBeforeMod);
             xBeforeModPFile.createNewFile();
             // secure secp256k1 formula: y^2 mod p = (x ^ 3 + 7) mod p
             BigInteger LHS = yBigInteger.pow(2).mod(p);
             BigInteger RHS = xBigInteger.pow(3).add(SEVEN).mod(p);
-            File yFile = new File(newNodeFile, "y-" + y);
+            File yFile = new File(newNodeFile, "The value of y for this node is " + y);
             yFile.createNewFile();
-            File yBeforeModPFile = new File(newNodeFile, "ybeforemod"
-            		+ SEPERATOR + yBeforeMod);
+            File yBeforeModPFile = new File(newNodeFile, "The value of y for this node before applying mod p is "
+            		+ yBeforeMod);
             yBeforeModPFile.createNewFile();
-            File y2modpFile = new File(newNodeFile, "y2modp" +
-            		SEPERATOR + LHS);
+            File y2modpFile = new File(newNodeFile, "The value of the left hand size of the equation, y^2 mod p, is " +
+            		LHS);
             y2modpFile.createNewFile();
-            File x3p7modpFile = new File(newNodeFile, "x3p7modp" +
-            		SEPERATOR + RHS);
+            File x3p7modpFile = new File(newNodeFile,
+            		"The value of the right hand size of the equation, x^3 + 7 mod p, is " +
+            		RHS);
             x3p7modpFile.createNewFile();
-            File gFile = new File(newNodeFile, gCount + "g");
-            gFile.createNewFile();
-            File gFile2 = new File(newNodeFile, "g" +
-            		SEPERATOR + gCount);
-            gFile2.createNewFile();
-            File gFile3 = new File(newNodeFile, "private_key" +
-            		SEPERATOR + gCount);
-            gFile3.createNewFile();
-            File gFile4 = new File(newNodeFile, "pr" + SEPERATOR +
-            		gCount);
-            gFile4.createNewFile();
+            String segwit = UtilityToFindABitcoinAddressFromAPublicKey
+				.getABitcoinAddressInTheSegWitFormatFromThePublicKeyInHexadecimalForm(
+						compressedBitcoinAddress);
+			file = new File(newNodeFile,
+            		"The Bitcoin address of this node in Segwit format is " +
+            		segwit);
+            file.createNewFile();
+            new File(commandPath,
+            		"create a mapping from an address value of " +
+            		segwit +
+            		" back to the g-node value of " + gCount)
+            		.createNewFile();
+            file = new File(newNodeFile,
+            		"The Bitcoin address of this node in Legacy format is " +
+            		UtilityToFindABitcoinAddressFromAPublicKey
+            			.getABitcoinAddressInTheOldFormatFromThePublicKeyInHexadecimalForm(
+            					compressedBitcoinAddress));
+            file.createNewFile();
+            String nestedSegwit = NestedSegwitAddress
+            		.generateNestedSegwitAddress(
+            		EncodingUtils.hexToBytes(compressedBitcoinAddress));
+            file = new File(newNodeFile,
+            		SafeFilename.makeSafe("The Bitcoin address of this node in the Nested Segwit Format is " +
+            				nestedSegwit + ".", false));
+            new File(commandPath,
+            		"create a mapping from an address value of " +
+            		nestedSegwit +
+            		" back to the g-node value of " + gCount)
+            		.createNewFile();
+            file.createNewFile();
+            String uncompressedLegacyAddress = LegacyBitcoinAddressGenerator
+            		.generateUncompressedLegacyAddress(
+            		uncompressedBitcoinAddress);
+            file = new File(newNodeFile,
+            		SafeFilename.makeSafe("The Bitcoin address of this node in the uncompressed Legacy Format is " +
+            				uncompressedLegacyAddress + ".", false));
+            new File(commandPath,
+            		"create a mapping from an address value of " +
+            		uncompressedLegacyAddress +
+            		" back to the g-node value of " + gCount)
+            		.createNewFile();
+            file.createNewFile();
+            String checksumAddress = EthereumAddress.toChecksumAddress(EthereumAddress.getEthereumAddress(
+					EncodingUtils.hexToBytes(publicKeyInHexadecimalForm)));
+			File eth = new File(newNodeFile,
+            		"The Ethereum address of this node in Legacy format is " +
+            		checksumAddress);
+            eth.createNewFile();
+            new File(commandPath,
+            		"create a mapping from an ethereum address value of " +
+            		checksumAddress +
+            		" back to the g-node value of " + gCount)
+            		.createNewFile();
+
+            System.out.println("x = " + x);
+            System.out.println("x length = " + x.length());
+            String taproot = Bech32m.encode("bc", 0x01, EncodingUtils.hexToBytes(x));
+            file = new File(newNodeFile,
+            		SafeFilename.makeSafe("The Bitcoin address of this node in the Taproot format is " +
+            				taproot + ".", false));
+            file.createNewFile();
             if (LHS.equals(RHS)) {
                 logger.info("FS node successfully created on secure secp256k1 curve");
             } else {
                 logger.info("FS node not on secure secp256k1 curve");
             }
         } catch (Exception e) {
-            logger.info("FS nodes shouldn't be created at infinity");
+            throw new IllegalStateException(e);
         }
     }
 
