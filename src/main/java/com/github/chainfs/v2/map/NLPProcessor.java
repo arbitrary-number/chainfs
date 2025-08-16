@@ -28,6 +28,7 @@ import com.github.chainfs.ASTNode;
 import com.github.chainfs.GenerateChainFSStructure;
 import com.github.chainfs.v2.CreateNode3;
 import com.github.chainfs.v2.io.Folder;
+import com.github.chainfs.v4.CreateSatoshiNode;
 
 public class NLPProcessor {
 
@@ -69,6 +70,9 @@ public class NLPProcessor {
         String mapPrefix = "create a mapping from an x value of ";
         String mapPrefix2 = "create a mapping from an address value of ";
         String mapPrefix3 = "create a mapping from an ethereum address value of ";
+        String mapPrefix4 = "create s-node mapping from an x value of ";
+        String mapPrefix5 = "create s-node mapping from an address value of ";
+        String mapPrefix6 = "create s-node mapping from an ethereum address value of ";
         if (command.startsWith(mapPrefix)) {
         	int pos = command.indexOf(" ", mapPrefix.length() + 1);
         	String xValue = command.substring(mapPrefix.length(), pos);
@@ -85,6 +89,7 @@ public class NLPProcessor {
         		+ process.getPath();
         	File f = new File(path, s);
         	f.createNewFile();
+        	CreateSatoshiNode.process(new BigInteger(xValue, 16), null);
         	PlatformLogger.logPlatformPath(f);
         }
         if (command.startsWith(mapPrefix2)) {
@@ -103,6 +108,7 @@ public class NLPProcessor {
         		+ process.getPath();
         	File f = new File(path, s);
         	f.createNewFile();
+        	CreateSatoshiNode.process(new BigInteger(bitcoinAddress, 16), null);
         	PlatformLogger.logPlatformPath(f);
         }
         if (command.startsWith(mapPrefix3)) {
@@ -121,6 +127,130 @@ public class NLPProcessor {
         		+ process.getPath();
         	File f = new File(path, s);
         	f.createNewFile();
+        	CreateSatoshiNode.process(new BigInteger(eth, 16), null);
+        	PlatformLogger.logPlatformPath(f);
+        }
+        if (command.startsWith(mapPrefix4)) {
+        	int pos = command.indexOf(" ", mapPrefix4.length() + 1);
+        	String xValue = command.substring(mapPrefix4.length(), pos);
+        	logger.info("xValue |" + xValue + "|");
+        	String searchString = " back to the s-node value of ";
+			pos = command.indexOf(searchString);
+			String sValue = command.substring(pos + searchString.length(), command.length());
+        	logger.info("sValue |" + sValue + "|");
+        	ASTNode process = CreateNode3.process(new BigInteger(xValue, 16), null);
+        	String s = "this g-node contains a mapping from an x value of " +
+        			xValue +
+        			" to a s-node value of " + sValue;
+        	String path = GenerateChainFSStructure.getDataDirectoryPath()
+        		+ process.getPath();
+        	File f = new File(path, s);
+        	f.createNewFile();
+        	String conflictDetectionCheck = "this g-node contains a mapping from an x value of ";
+        	String[] conflictDetectionFileList = new File(path).list();
+        	for (String file : conflictDetectionFileList) {
+        		searchString = " to a g-node value of ";
+        		if (file.startsWith(conflictDetectionCheck) &&
+        				file.contains(searchString)) {
+                	logger.warn("Detected a conflict between G-nodes and S-nodes");
+                	logger.warn("Conflict detected at an x value of: " + xValue);
+                	logger.warn("Conflict detected at s-node: " + sValue);
+        			searchString = "  to a g-node value of  ";
+        			pos = command.indexOf(searchString);
+        			String gValue = command.substring(pos + searchString.length(), command.length());
+                	logger.warn("Conflict detected at g-node: " + gValue);
+                	logger.warn("Sleeping for a minute, then exiting...");
+                	try {
+						Thread.sleep(60000L);
+					} catch (InterruptedException e) {
+						throw new IllegalStateException(e);
+					}
+                	System.exit(0);
+        		}
+        	}
+        	CreateSatoshiNode.process(new BigInteger(xValue, 16), null);
+        	PlatformLogger.logPlatformPath(f);
+        }
+        if (command.startsWith(mapPrefix5)) {
+        	int pos = command.indexOf(" ", mapPrefix5.length() + 1);
+        	String bitcoinAddress = command.substring(mapPrefix5.length(), pos);
+        	logger.info("xValue |" + bitcoinAddress + "|");
+        	String searchString = " back to the s-node value of ";
+			pos = command.indexOf(searchString);
+			String sValue = command.substring(pos + searchString.length(), command.length());
+        	logger.info("gValue |" + sValue + "|");
+        	ASTNode process = CreateNode3.process(new BigInteger(1, bitcoinAddress.getBytes()), null);
+        	String s = "this g-node contains a mapping from a Bitcoin address value of " +
+        			bitcoinAddress +
+        			" to a s-node value of " + sValue;
+        	String path = GenerateChainFSStructure.getDataDirectoryPath()
+        		+ process.getPath();
+        	File f = new File(path, s);
+        	f.createNewFile();
+        	String conflictDetectionCheck =
+        			"this g-node contains a mapping from a Bitcoin address value of ";
+        	String[] conflictDetectionFileList = new File(path).list();
+        	for (String file : conflictDetectionFileList) {
+        		searchString = " to a g-node value of ";
+        		if (file.startsWith(conflictDetectionCheck) &&
+        				file.contains(searchString)) {
+                	logger.warn("Detected a conflict between G-nodes and S-nodes");
+                	logger.warn("Conflict detected at Bitcoin address: " + bitcoinAddress);
+                	logger.warn("Conflict detected at s-node: " + sValue);
+        			pos = command.indexOf(searchString);
+        			String gValue = command.substring(pos + searchString.length(), command.length());
+                	logger.warn("Conflict detected at g-node: " + gValue);
+                	logger.warn("Sleeping for a minute, then exiting...");
+                	try {
+						Thread.sleep(60000L);
+					} catch (InterruptedException e) {
+						throw new IllegalStateException(e);
+					}
+                	System.exit(0);
+        		}
+        	}
+        	CreateSatoshiNode.process(new BigInteger(bitcoinAddress, 16), null);
+        	PlatformLogger.logPlatformPath(f);
+        }
+        if (command.startsWith(mapPrefix6)) {
+        	int pos = command.indexOf(" ", mapPrefix6.length() + 1);
+        	String eth = command.substring(mapPrefix6.length(), pos);
+        	logger.info("Ethereum address |" + eth + "|");
+        	String searchString = " back to the g-node value of ";
+			pos = command.indexOf(searchString);
+			String sValue = command.substring(pos + searchString.length(), command.length());
+        	logger.info("gValue |" + sValue + "|");
+        	ASTNode process = CreateNode3.process(new BigInteger(1, eth.getBytes()), null);
+        	String s = "this g-node contains a mapping from an ethereum address value of " +
+        			eth +
+        			" to a s-node value of " + sValue;
+        	String path = GenerateChainFSStructure.getDataDirectoryPath()
+        		+ process.getPath();
+        	File f = new File(path, s);
+        	f.createNewFile();
+        	String conflictDetectionCheck =
+        			"this g-node contains a mapping from an ethereum address value of ";
+        	String[] conflictDetectionFileList = new File(path).list();
+        	for (String file : conflictDetectionFileList) {
+        		searchString = " to a g-node value of ";
+        		if (file.startsWith(conflictDetectionCheck) &&
+        				file.contains(searchString)) {
+                	logger.warn("Detected a conflict between G-nodes and S-nodes");
+                	logger.warn("Conflict detected at Bitcoin address: " + eth);
+                	logger.warn("Conflict detected at s-node: " + sValue);
+        			pos = command.indexOf(searchString);
+        			String gValue = command.substring(pos + searchString.length(), command.length());
+                	logger.warn("Conflict detected at g-node: " + gValue);
+                	logger.warn("Sleeping for a minute, then exiting...");
+                	try {
+						Thread.sleep(60000L);
+					} catch (InterruptedException e) {
+						throw new IllegalStateException(e);
+					}
+                	System.exit(0);
+        		}
+        	}
+        	CreateSatoshiNode.process(new BigInteger(eth, 16), null);
         	PlatformLogger.logPlatformPath(f);
         }
     }

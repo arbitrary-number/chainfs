@@ -51,6 +51,10 @@ public class GenerateChainFSStructure {
         }
     }
 
+    public static String getDataDirectoryPathSatoshi() {
+    	return getDataDirectoryPath() + "/satoshi";
+    }
+
     public static String getDataDirectoryPath() {
         Map<String, String> env = System.getenv();
         String os = System.getProperty("os.name").toLowerCase();
