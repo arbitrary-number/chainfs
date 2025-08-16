@@ -11,13 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) Arbitrary Project Team. All rights reserved.
+ * Copyright (c) Arbitrary Number Project Team. All rights reserved.
  */
 package com.github.chainfs.v2.map;
 
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.*;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -34,7 +35,7 @@ public class NLPProcessor {
     		LoggerFactory.getLogger(NLPProcessor.class);
 
 
-    private static final long PROCESSING_DELAY_MS = 20000; // 2 seconds
+    private static final long PROCESSING_DELAY_MS = 2000; // 2 seconds
 
     public static void main(String[] args) throws IOException, InterruptedException {
     	process();
@@ -47,52 +48,22 @@ public class NLPProcessor {
     					GenerateChainFSStructure.getDataDirectoryPath(), "/g"),
         				"commands to process");
 
-        while (true) {
-            boolean processed = false;
+	        while (true) {
+	            processCommand();
+	   	     TimeUnit.MILLISECONDS.sleep(PROCESSING_DELAY_MS);
+	      }
 
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(
-            		commandPath.toPath(), "*")) {
-                for (Path commandFile : stream) {
-                    Path lockFile = commandFile.resolveSibling(commandFile.getFileName().toString() + ".lock");
+       }
 
-                    if (Files.exists(lockFile)) {
-                        continue; // Skip file that's already locked
-                    }
 
-                    // Try to create lock file
-                    try {
-                        Files.createFile(lockFile);
-                        System.out.println("Locked: " + commandFile.getFileName());
-
-                        // Simulate processing
-                        processCommand(commandFile);
-
-                        // Remove command and lock
-                        Files.deleteIfExists(commandFile);
-                        Files.deleteIfExists(lockFile);
-
-                        System.out.println("Processed and deleted: " + commandFile.getFileName());
-                        processed = true;
-                        break; // Process one file at a time
-                    } catch (IOException e) {
-                        System.err.println("Failed to create lock for: " + commandFile + " — skipping");
-                    }
-                }
-            }
-
-            // Wait before checking for the next command
-            if (processed) {
-                TimeUnit.MILLISECONDS.sleep(PROCESSING_DELAY_MS);
-            } else {
-                // No command found, wait a bit longer
-                TimeUnit.MILLISECONDS.sleep(PROCESSING_DELAY_MS / 2);
-            }
-        }
-    }
-
-    private static void processCommand(Path commandFile) throws IOException {
+    private static void processCommand() throws IOException {
         // Example: read and print command
-        String command = commandFile.toFile().getName();
+    	NLPCommandLogManager manager = NLPCommandLogManager.getInstance();
+        Optional<String> commandOptional = manager.readNextCommand();
+        if (commandOptional.isEmpty()) {
+        	return;
+        }
+        String command = commandOptional.get();
         System.out.println("Processing NLP command: " + command);
 
         String mapPrefix = "create a mapping from an x value of ";
@@ -124,7 +95,7 @@ public class NLPProcessor {
 			pos = command.indexOf(searchString);
 			String gValue = command.substring(pos + searchString.length(), command.length());
         	logger.info("gValue |" + gValue + "|");
-        	ASTNode process = CreateNode3.process(new BigInteger(bitcoinAddress, 16), null);
+        	ASTNode process = CreateNode3.process(new BigInteger(1, bitcoinAddress.getBytes()), null);
         	String s = "this g-node contains a mapping from a Bitcoin address value of " +
         			bitcoinAddress +
         			" to a g-node value of " + gValue;
@@ -142,7 +113,7 @@ public class NLPProcessor {
 			pos = command.indexOf(searchString);
 			String gValue = command.substring(pos + searchString.length(), command.length());
         	logger.info("gValue |" + gValue + "|");
-        	ASTNode process = CreateNode3.process(new BigInteger(eth, 16), null);
+        	ASTNode process = CreateNode3.process(new BigInteger(1, eth.getBytes()), null);
         	String s = "this g-node contains a mapping from an ethereum address value of " +
         			eth +
         			" to a g-node value of " + gValue;

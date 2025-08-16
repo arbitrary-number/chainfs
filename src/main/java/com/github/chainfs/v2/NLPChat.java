@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) Arbitrary Project Team. All rights reserved.
+ * Copyright (c) Arbitrary Number Project Team. All rights reserved.
  */
 package com.github.chainfs.v2;
 
@@ -37,18 +37,18 @@ public class NLPChat {
 			String prefix2 = "create a high node based on the name ";
             if (input.toLowerCase().startsWith("convert ")) {
                 String name = input.substring(8).trim();
-                String value = convertNameToNumber(name, false);
+                String value = EncodingUtils.convertNameToNumber(name, false);
                 System.out.println("The numeric value of \"" + name + "\" is: " + value);
             } else if (input.toLowerCase().startsWith(
 						prefix)) {
 				String name = input.substring(prefix.length()).trim();
-				String value = convertNameToNumber(name, false);
+				String value = EncodingUtils.convertNameToNumber(name, false);
 				System.out.println("The numeric value of \"" + name + "\" is: " + value);
 				CreateNode3.process(new BigInteger(value), null);
             } else if (input.toLowerCase().startsWith(
 						prefix2)) {
 				String name = input.substring(prefix.length()).trim();
-				String value = convertNameToNumber(name, false);
+				String value = EncodingUtils.convertNameToNumber(name, false);
 				System.out.println("The numeric value of \"" + name + "\" is: " + value);
 				BigInteger highValue = new BigInteger("2").pow(256).subtract(
 						new BigInteger("1"));
@@ -61,21 +61,5 @@ public class NLPChat {
         }
 
         scanner.close();
-    }
-
-    // Converts each letter to a number: a=1, ..., z=26, space=0
-    public static String convertNameToNumber(String input, boolean space) {
-        StringBuilder sb = new StringBuilder();
-        for (char c : input.toLowerCase().toCharArray()) {
-            if (c >= 'a' && c <= 'z') {
-                sb.append(c - 'a' + 1);
-                if (space) {
-                	sb.append("0");
-                }
-            } else if (c == ' ') {
-                sb.append("0");
-            }
-        }
-        return sb.toString().trim();
     }
 }

@@ -1,10 +1,43 @@
 ChainFS is a new generation filesystem that uses the security of the
 secp256k1 algorithm combined with the double and add algorithm, to form
-the basis of the secure ChainFS file system. The filesystem uses three core AST Tree
-structures (g-tree, pkx-tree, and pkx-tree) for efficiency, performance and security.
+the basis of the secure ChainFS file system.
 
-ChainFS welcomes issue reports, suggestions and contributions under the 
-fork and pull request model
+Important Note on Bitcoin, Ethereum, and USDT Secret Key Wallet Address to Secret Key Mapping Worker Processes
+
+This is necessary for G-Node collision detection purposes to make sure each G-Node used for every single, file, index and data storage item in the filesystem isn't already in use by a Secret Key wallet holder (since there is a 1-1 mapping between Secret Keys and G-Nodes).  However, since there are more secret key wallets available than Atoms in the Universe on the Elliptic Curve that Bitcoin, Ethereum and USDT share (as well as every single Ethereum token), this should not be a concern to anyone that it launches a background Bitcoin and Ethereum and USDT to Secret Key mapping worker than runs 24/7 continuously forever using the properties of the Elliptic curve to store the data, which then recursively requires more Bitcoin etc. <-> Secret Key address mapping work (for filesystem G-node collision detection).
+
+
+V2 Features:
+
+- Lists all Bitcoin, USDT and Ethereum addresses for each filesystem G-node number (wallet software
+  refers to these numbers as secret keys, however for the ChainFS filesystem, these are index
+  nodes used for store and filesystem metadata, which also serve a dual purpose as a collision
+  detection system via a Bitcoin, USDT and Ethereum mapping worker that maps every address for
+  every G-node found to it's G-node number (secret key in wallet terms)
+- These are listed for cross-referencing with address lists to resolve any G-node collisions 
+  (secret key <-> Used Bitcoin/Ethereum addresses).
+- If funds are found on any ChainFS node, work is in progress to automatically transfer these
+  funds to special custodial account nodes so that the funds can be returned to the rightful
+  owner.
+- Keep in mind that the chances of a collision are low, even if ChainFS has to create a large
+  number of G-nodes recursively to operate.  This is because the number of available nodes
+  is larger than the number of Atoms in the Universe.
+- All users of ChainFS can safely use as many G-nodes (wallet software calls these wallets)
+  since the number of possible wallets is so huge that no-one can fathom the number.
+- As ChainFS works it builds maps of Bitcoin and Ethereum addresses to G-nodes (typically
+  called secrets key).  This is a recursive process because as it creates nodes, it finds the
+  addresses, which it then has to store back in the G-node system using the double and add
+  algorithm.
+- It creates a transaction command log of all addresses that it needs to map out then an 
+  NLPProcessor background task seamlessly reads them and adds the addresses to the G-node tree.
+- Because of the amazing properties of the Bitcoin elliptic curve, all lookups are Order One,
+  which means incredibly fast, so any conflicts with existing funded or unfunded Bitcoin,
+  Ethereum or USDT wallets are immediately logged for custodial resolution.
+- As mentioned earlier, the Bitcoin, Ethereum and USDT elliptic curve is so secure that even
+  with a Bitcoin, Ethereum and USDT mapping process running 24/7 continuously forever, the
+  chances of a collision are so low due to the endless availability of secret key wallet addresses
+  (there are more wallet addresses available than grains of sand).
+  
 
 Advanced Filesystem Features:
 

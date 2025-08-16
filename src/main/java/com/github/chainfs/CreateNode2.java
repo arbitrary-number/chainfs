@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) Arbitrary Project Team. All rights reserved.
+ * Copyright (c) Arbitrary Number Project Team. All rights reserved.
  */
 package com.github.chainfs;
 

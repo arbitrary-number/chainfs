@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) Arbitrary Project Team. All rights reserved.
+ * Copyright (c) Arbitrary Number Project Team. All rights reserved.
  */
 package com.github.chainfs.v2;
 
@@ -43,6 +43,22 @@ public class EncodingUtils {
 		System.out.println("In \"Reverse Gematria with noughts\", \"Hello\" is encoded as: " +
 				theResult + ".");
 	}
+
+    // Converts each letter to a number: a=1, ..., z=26, space=0
+    public static String convertNameToNumber(String input, boolean space) {
+        StringBuilder sb = new StringBuilder();
+        for (char c : input.toLowerCase().toCharArray()) {
+            if (c >= 'a' && c <= 'z') {
+                sb.append(c - 'a' + 1);
+                if (space) {
+                	sb.append("0");
+                }
+            } else if (c == ' ') {
+                sb.append("0");
+            }
+        }
+        return sb.toString().trim();
+    }
 
     public static String decodeGematria(String input) {
         StringBuilder result = new StringBuilder();

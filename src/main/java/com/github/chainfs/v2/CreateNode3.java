@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) Arbitrary Project Team. All rights reserved.
+ * Copyright (c) Arbitrary Number Project Team. All rights reserved.
  */
 package com.github.chainfs.v2;
 
@@ -28,6 +28,7 @@ import com.github.chainfs.ASTNode;
 import com.github.chainfs.GenerateChainFSStructure;
 import com.github.chainfs.NumberFormatUtils;
 import com.github.chainfs.PKTreeManager;
+import com.github.chainfs.v2.map.NLPCommandLogManager;
 
 // @formatter:off
 /**
@@ -114,7 +115,7 @@ public class CreateNode3 {
     public static void main(String[] args){
         // BigInteger initialNodeCount = new BigInteger("9", 16);
         // @formatter:off
-        BigInteger initialNodeCount = new BigInteger("2047");
+        BigInteger initialNodeCount = new BigInteger("20474324734897982753892347983298");
         //"aa9a3e43e57a4cd717991c959f9fc40c43aa2667e16ea169d9f8310670af15ce", 16);
         //"1110001011001110" +
         		                                     //"0011001110001100", 2);
@@ -146,9 +147,6 @@ public class CreateNode3 {
             int bitIndex = i - 1;
             boolean isOne = gMultiplier.testBit(bitIndex);
             int bit = isOne ? 1 : 0;
-            logger.info("i = " + i);
-            logger.info("bitIndex = " + bitIndex);
-            logger.info("bit = " + bit);
             if (isOne) {
                 if (firstOneFound) {
                     gCount = gCount.add(gCount);
@@ -188,15 +186,7 @@ public class CreateNode3 {
             } else {
                 if (firstOneFound) {
                     gCount = gCount.add(gCount);
-
-                    String nodeName = getFSNodeName(current);
-                    logger.info("Node name =  " + nodeName);
-                    BigInteger currentTwo = new BigInteger(nodeName).multiply(TWO).mod(p);
-                    ECFieldElement rhs = curve.fromBigInteger(currentTwo);
-                    logger.info("RHS =  " + rhs);
-
                     current = current.twice();
-                    logger.info("New name after secure doubling =  " + getFSNodeName(current));
                     path.append("/" + gCount.toString(36) + "g/");
                     ASTNode gChild = new ASTNode("gDouble", gCount + "g", null, null, null,
                             currentGNode.getPath() + "/" + gCount.toString(36) + "g");
@@ -273,18 +263,7 @@ public class CreateNode3 {
 	            		"g_link_pointer_y_" + gLinkPointerY, true, "pky");
 				}
             }
-
-
-            File commandPath =
-            		new File(new File(
-        					GenerateChainFSStructure.getDataDirectoryPath(), "/g"),
-            				"commands to process");
-            new File(commandPath,
-            		"create a mapping from an x value of " +
-            		x +
-            		" back to the g-node value of " + gCount)
-            		.createNewFile();
-
+			NLPCommandLogManager instance = NLPCommandLogManager.getInstance();
             String uncompressedBitcoinAddress = "04" + publicKeyInHexadecimalForm;
 			File publicKeyFile2 = new File(newNodeFile,
             		SafeFilename.makeSafe("The Bitcoin Public Key for this node in uncompressed form is " +
@@ -293,22 +272,16 @@ public class CreateNode3 {
             String command = "create a mapping from an address value of " +
 				uncompressedBitcoinAddress +
 				" back to the g-node value of " + gCount;
-            logger.info("command = " + command);
-			File command1 = new File(commandPath, command);
-			if (!command1.exists()) {
-				command1.createNewFile();
-			}
+            instance.appendCommand(command);
             String compressedBitcoinAddress =
             		BitcoinPublicKeyCompressor.compressPublicKey(uncompressedBitcoinAddress);
 			File publicKeyFile3 = new File(newNodeFile,
             		SafeFilename.makeSafe("The Bitcoin Public Key for this node in compressed form is " +
             		compressedBitcoinAddress + ".", true));
             publicKeyFile3.createNewFile();
-            new File(commandPath,
-            		"create a mapping from an address value of " +
+            instance.appendCommand("create a mapping from an address value of " +
             		compressedBitcoinAddress +
-            		" back to the g-node value of " + gCount)
-            		.createNewFile();
+            		" back to the g-node value of " + gCount);
             File gValue = new File(newNodeFile,
             		SafeFilename.makeSafe("The G value and Private Key for this node is " +
             		gCount + ".", false));
@@ -329,7 +302,11 @@ public class CreateNode3 {
             		"for this node is " + publicKeyInHexadecimalForm);
             publicKeyFile4.createNewFile();
             File xFile = new File(newNodeFile, "The value of x for this node is " + x);
-            xFile.createNewFile();
+            if (xFile.createNewFile()) {
+            	instance.appendCommand("create a mapping from an x value of " +
+            			x +
+            			" back to the g-node value of " + gCount);
+            }
             File xBeforeModPFile = new File(newNodeFile, "The value of x for this node before applying mod p is  " +
             		xBeforeMod);
             xBeforeModPFile.createNewFile();
@@ -354,12 +331,11 @@ public class CreateNode3 {
 			file = new File(newNodeFile,
             		"The Bitcoin address of this node in Segwit format is " +
             		segwit);
-            file.createNewFile();
-            new File(commandPath,
-            		"create a mapping from an address value of " +
+            if (file.createNewFile()) {
+            	instance.appendCommand("create a mapping from an address value of " +
             		segwit +
-            		" back to the g-node value of " + gCount)
-            		.createNewFile();
+            		" back to the g-node value of " + gCount);
+            }
             file = new File(newNodeFile,
             		"The Bitcoin address of this node in Legacy format is " +
             		UtilityToFindABitcoinAddressFromAPublicKey
@@ -372,47 +348,43 @@ public class CreateNode3 {
             file = new File(newNodeFile,
             		SafeFilename.makeSafe("The Bitcoin address of this node in the Nested Segwit Format is " +
             				nestedSegwit + ".", false));
-            new File(commandPath,
-            		"create a mapping from an address value of " +
-            		nestedSegwit +
-            		" back to the g-node value of " + gCount)
-            		.createNewFile();
-            file.createNewFile();
+            if (file.createNewFile()) {
+                instance.appendCommand("create a mapping from an address value of " +
+                		nestedSegwit +
+                		" back to the g-node value of " + gCount);
+            }
             String uncompressedLegacyAddress = LegacyBitcoinAddressGenerator
             		.generateUncompressedLegacyAddress(
             		uncompressedBitcoinAddress);
             file = new File(newNodeFile,
             		SafeFilename.makeSafe("The Bitcoin address of this node in the uncompressed Legacy Format is " +
             				uncompressedLegacyAddress + ".", false));
-            new File(commandPath,
-            		"create a mapping from an address value of " +
-            		uncompressedLegacyAddress +
-            		" back to the g-node value of " + gCount)
-            		.createNewFile();
-            file.createNewFile();
+            if (file.createNewFile()) {
+                instance.appendCommand("create a mapping from an address value of " +
+                		uncompressedLegacyAddress +
+                		" back to the g-node value of " + gCount);
+            }
             String checksumAddress = EthereumAddress.toChecksumAddress(EthereumAddress.getEthereumAddress(
 					EncodingUtils.hexToBytes(publicKeyInHexadecimalForm)));
 			File eth = new File(newNodeFile,
             		"The Ethereum address of this node in Legacy format is " +
             		checksumAddress);
-            eth.createNewFile();
-            new File(commandPath,
-            		"create a mapping from an ethereum address value of " +
+            if (eth.createNewFile()) {
+            	instance.appendCommand("create a mapping from an ethereum address value of " +
             		checksumAddress +
-            		" back to the g-node value of " + gCount)
-            		.createNewFile();
-
-            System.out.println("x = " + x);
-            System.out.println("x length = " + x.length());
+            		" back to the g-node value of " + gCount);
+            }
             String taproot = Bech32m.encode("bc", 0x01, EncodingUtils.hexToBytes(x));
             file = new File(newNodeFile,
             		SafeFilename.makeSafe("The Bitcoin address of this node in the Taproot format is " +
             				taproot + ".", false));
-            file.createNewFile();
-            if (LHS.equals(RHS)) {
-                logger.info("FS node successfully created on secure secp256k1 curve");
-            } else {
-                logger.info("FS node not on secure secp256k1 curve");
+            if (file.createNewFile()) {
+                instance.appendCommand("create a mapping from an address value of " +
+                		taproot +
+                		" back to the g-node value of " + gCount);
+            }
+            if (!LHS.equals(RHS)) {
+                throw new IllegalStateException("FS node not on secure secp256k1 curve");
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);

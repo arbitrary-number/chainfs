@@ -11,12 +11,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) Arbitrary Project Team. All rights reserved.
+ * Copyright (c) Arbitrary Number Project Team. All rights reserved.
  */
 package com.github.chainfs.v2.io;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 
 import org.slf4j.Logger;
