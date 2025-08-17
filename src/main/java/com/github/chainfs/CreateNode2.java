@@ -24,6 +24,8 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.chainfs.v4.FSUtils;
+
 // @formatter:off
 /**
  * Creates the initial node: g, for chainfs, using the secure secp256k1 algorithm
@@ -121,7 +123,7 @@ public class CreateNode2 {
         logger.info("gMultiplier: " + gMultiplier);
         logger.info("Bit length: " + gMultiplier.bitLength());
 
-        SecP256K1Curve curve = new SecP256K1Curve();
+        SecP256K1Curve curve = FSUtils.CURVE;
 
         ECPoint G = getgPoint(curve);
 

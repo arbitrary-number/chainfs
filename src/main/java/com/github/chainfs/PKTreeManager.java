@@ -24,6 +24,8 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.chainfs.v4.FSUtils;
+
 // @formatter:off
 /**
  * Creates the PK tree
@@ -64,7 +66,7 @@ public class PKTreeManager {
     		logger.info("initialNodeCount: " + gMultiplier);
     		logger.info("Bit length: " + gMultiplier.bitLength());
     	}
-        SecP256K1Curve curve = new SecP256K1Curve();
+        SecP256K1Curve curve = FSUtils.CURVE;
 
         // @formatter:off
         BigInteger Gx =

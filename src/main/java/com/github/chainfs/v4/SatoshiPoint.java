@@ -18,7 +18,6 @@ package com.github.chainfs.v4;
 import java.math.BigInteger;
 
 import org.bouncycastle.math.ec.ECPoint;
-import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 
 public class SatoshiPoint {
 
@@ -35,8 +34,8 @@ public class SatoshiPoint {
 	private static final BigInteger SATOSHI_Y = new BigInteger(
 			"615f244c38311983fb0f5b99e3fd52f255c5cc47a03ee2d85e78eaf6fa76bb9d", 16);
 
-	public static ECPoint getSatoshiPoint(SecP256K1Curve curve) {
-	    ECPoint S = curve.createPoint(SATOSHI_X, SATOSHI_Y);
+	public static ECPoint getSatoshiPoint() {
+	    ECPoint S = FSUtils.CURVE.createPoint(SATOSHI_X, SATOSHI_Y);
 	    return S;
 	}
 

@@ -20,6 +20,8 @@ import java.math.BigInteger;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 
+import com.github.chainfs.v4.FSUtils;
+
 /*
  * Modular Division of an ECPoint in O(1) time
  */
@@ -53,7 +55,7 @@ public class ModularDivision {
 		if (!checkValid(divisor)) {
 			throw new IllegalStateException("Can only divide by a power of 2");
 		}
-		SecP256K1Curve curve = new SecP256K1Curve();
+		SecP256K1Curve curve = FSUtils.CURVE;
 		ECPoint gPoint = CreateNode2.getgPoint(curve);
 		ECPoint gPortionSize = convertToGNumber(divisor);
 		ECPoint currentPoint = point;

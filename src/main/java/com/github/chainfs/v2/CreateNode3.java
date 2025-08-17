@@ -29,6 +29,7 @@ import com.github.chainfs.GenerateChainFSStructure;
 import com.github.chainfs.NumberFormatUtils;
 import com.github.chainfs.PKTreeManager;
 import com.github.chainfs.v2.map.NLPCommandLogManager;
+import com.github.chainfs.v4.FSUtils;
 
 // @formatter:off
 /**
@@ -103,14 +104,9 @@ public class CreateNode3 {
 
     private static final BigInteger SEVEN = new BigInteger("7");
 
-    // @formatter:off
-    static final BigInteger p =
-        new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" +
-    	  	  		 "FFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
-
 	private static final boolean PROCESS_PK_TREES = false;
 
-    // @formatter:on
+	private static final BigInteger P = FSUtils.P;
 
     public static void main(String[] args){
         // BigInteger initialNodeCount = new BigInteger("9", 16);
@@ -128,9 +124,8 @@ public class CreateNode3 {
         logger.info("gMultiplier: " + gMultiplier);
         logger.info("Bit length: " + gMultiplier.bitLength());
 
-        SecP256K1Curve curve = new SecP256K1Curve();
-
-        ECPoint G = getgPoint(curve);
+        SecP256K1Curve curve = FSUtils.CURVE;
+        ECPoint G = FSUtils.G;
 
         logger.info("Initializing initial node from infinity...");
         ECPoint current = curve.getInfinity();
@@ -198,6 +193,7 @@ public class CreateNode3 {
                 }
             }
         }
+        currentGNode.setEcPoint(current);
         return currentGNode;
     }
 
@@ -209,8 +205,8 @@ public class CreateNode3 {
         BigInteger y = affineYCoord.toBigInteger();
         ECFieldElement affineXCoord = current.normalize().getAffineXCoord();
         BigInteger x = affineXCoord.toBigInteger();
-        BigInteger LHS = y.pow(2).mod(p); // y^2 mod p = (x ^ 3 + 7) mod p
-        BigInteger RHS = x.pow(3).add(SEVEN).mod(p);
+        BigInteger LHS = y.pow(2).mod(P); // y^2 mod p = (x ^ 3 + 7) mod p
+        BigInteger RHS = x.pow(3).add(SEVEN).mod(P);
         if (!LHS.equals(RHS)) {
             throw new IllegalStateException("Curve validation unsuccessful");
         }
@@ -225,12 +221,12 @@ public class CreateNode3 {
         try {
             BigInteger xBigInteger = point.getAffineXCoord().toBigInteger();
             String xBeforeMod = xBigInteger.toString(16);
-            BigInteger xModP = xBigInteger.mod(p);
+            BigInteger xModP = xBigInteger.mod(P);
 			String x = xModP.toString(16);
             logger.info("x = " + x);
             BigInteger yBigInteger = point.getAffineYCoord().toBigInteger();
             String yBeforeMod = yBigInteger.toString(16);
-            BigInteger yModP = yBigInteger.mod(p);
+            BigInteger yModP = yBigInteger.mod(P);
 			String y = yModP.toString(16);
             logger.info("y = " + y);
             String dataDirectoryPath = GenerateChainFSStructure.getDataDirectoryPath();
@@ -311,8 +307,8 @@ public class CreateNode3 {
             		xBeforeMod);
             xBeforeModPFile.createNewFile();
             // secure secp256k1 formula: y^2 mod p = (x ^ 3 + 7) mod p
-            BigInteger LHS = yBigInteger.pow(2).mod(p);
-            BigInteger RHS = xBigInteger.pow(3).add(SEVEN).mod(p);
+            BigInteger LHS = yBigInteger.pow(2).mod(P);
+            BigInteger RHS = xBigInteger.pow(3).add(SEVEN).mod(P);
             File yFile = new File(newNodeFile, "The value of y for this node is " + y);
             yFile.createNewFile();
             File yBeforeModPFile = new File(newNodeFile, "The value of y for this node before applying mod p is "
@@ -389,25 +385,5 @@ public class CreateNode3 {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    public static ECPoint getgPoint(SecP256K1Curve curve) {
-	    // @formatter:off
-	    BigInteger Gx =
-	        new BigInteger(
-	            "79BE667EF9DCBBAC" +
-	            "55A06295CE870B07" +
-	            "029BFCDB2DCE28D9" +
-	            "59F2815B16F81798", 16);
-
-	    BigInteger Gy =
-	        new BigInteger(
-	            "483ADA7726A3C465" +
-	            "5DA4FBFC0E1108A8" +
-	            "FD17B448A6855419" +
-	            "9C47D08FFB10D4B8", 16);
-	    // @formatter:on
-	    ECPoint G = curve.createPoint(Gx, Gy);
-	    return G;
     }
 }

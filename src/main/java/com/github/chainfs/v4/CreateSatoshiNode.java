@@ -123,8 +123,8 @@ public class CreateSatoshiNode {
     public static void main(String[] args){
         // BigInteger initialNodeCount = new BigInteger("9", 16);
         // @formatter:off
-        BigInteger initialNodeCount = new BigInteger("20474324734897982753892347983298");
-        //"aa9a3e43e57a4cd717991c959f9fc40c43aa2667e16ea169d9f8310670af15ce", 16);
+        BigInteger initialNodeCount = new BigInteger(//"20474432473487982753892347983298");
+        "fa9a3e43e57a4cd717991c959f9fc40c43aa2667e16ea169d9f8310670af15ce", 16);
         //"1110001011001110" +
         		                                     //"0011001110001100", 2);
         // @formatter:on
@@ -136,9 +136,9 @@ public class CreateSatoshiNode {
         logger.info("gMultiplier: " + gMultiplier);
         logger.info("Bit length: " + gMultiplier.bitLength());
 
-        SecP256K1Curve curve = new SecP256K1Curve();
+        SecP256K1Curve curve = FSUtils.CURVE;
 
-        ECPoint G = SatoshiPoint.getSatoshiPoint(curve);
+        ECPoint G = FSUtils.SATOSHI_POINT;
 
         logger.info("Initializing initial node from infinity...");
         ECPoint current = curve.getInfinity();
@@ -206,6 +206,7 @@ public class CreateSatoshiNode {
                 }
             }
         }
+        currentGNode.setEcPoint(current);
         return currentGNode;
     }
 
@@ -310,11 +311,11 @@ public class CreateSatoshiNode {
             		"for this node is " + publicKeyInHexadecimalForm);
             publicKeyFile4.createNewFile();
             File xFile = new File(newNodeFile, "The value of x for this node is " + x);
-            if (xFile.createNewFile()) {
+            //if (xFile.createNewFile()) {
             	instance.appendCommand("create s-node mapping from an x value of " +
             			x +
             			" back to the s-node value of " + gCount);
-            }
+            //}
             File xBeforeModPFile = new File(newNodeFile, "The value of x for this node before applying mod p is  " +
             		xBeforeMod);
             xBeforeModPFile.createNewFile();
