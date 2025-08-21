@@ -3,11 +3,6 @@
 ; DLL entry-point, compiles with MSVC + ML64
 ; No heap, no CRT, clean-slate frame hot path
 
-OPTION WIN64:1
-
-PUBLIC  ecc_mul_g
-EXPORTS ecc_mul_g
-
 EXTERN  __imp_memcpy:PROC                ; we import memcpy from kernel32 implicitly
 EXTERN  RtlCaptureContext:PROC           ; zero cost: we never call it in release
 
