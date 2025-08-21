@@ -1,0 +1,42 @@
+name: Build secp256k1 MASM DLL
+
+on:
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
+
+    - name: Setup Visual Studio environment
+      shell: powershell
+      run: |
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        if (-Not (Test-Path $vswhere)) {
+          Write-Error "vswhere.exe not found!"
+          exit 1
+        }
+        $vsInstallPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+        if (-not $vsInstallPath) {
+          Write-Error "Visual Studio with VC tools not found!"
+          exit 1
+        }
+        Write-Output "VS install path: $vsInstallPath"
+        # Run vcvars64.bat to setup environment variables for x64 build tools
+        & "$vsInstallPath\VC\Auxiliary\Build\vcvars64.bat"
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        mkdir build
+        cd build
+        cmake ..\src\main\windows-x64-asm -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build with NMake
+      shell: cmd
+      run: |
+        cd build
+        nmake
