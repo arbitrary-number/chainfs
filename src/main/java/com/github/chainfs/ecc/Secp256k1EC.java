@@ -6,11 +6,20 @@ import java.util.HashMap;
 
 public class Secp256k1EC {
 
-    // secp256k1 field modulus p = 2^256 - 2^32 - 977
+    private static final int LOW_BIT_COUNT_FOR_PRECOMPUTE = 16;
+
+	private static final int MAX_DEPTH = 256 - LOW_BIT_COUNT_FOR_PRECOMPUTE;
+
+	private static final BigInteger TWO = BigInteger.valueOf(2);
+
+	// secp256k1 field modulus p = 2^256 - 2^32 - 977
     static final BigInteger P = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
 
     private static final BigInteger CURVE_ORDER = new BigInteger(
     	    "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16);
+
+	private static HashMap<String, BigInteger> lowBitPrecompute =
+			new HashMap<String, BigInteger>();
 
     // Helper: modulo with wraparound
     static BigInteger mod(BigInteger x) {
@@ -44,9 +53,9 @@ public class Secp256k1EC {
         BigInteger E = modMul(BigInteger.valueOf(3), A);             // E = 3 * A
         BigInteger F = modSqr(E);                                    // F = E^2
 
-        BigInteger X3 = modSub(F, modMul(BigInteger.valueOf(2), D)); // X3 = F - 2*D
+        BigInteger X3 = modSub(F, modMul(TWO, D)); // X3 = F - 2*D
         BigInteger Y3 = modSub(modMul(E, modSub(D, X3)), modMul(BigInteger.valueOf(8), C)); // Y3 = E*(D - X3) - 8*C
-        BigInteger Z3 = modMul(BigInteger.valueOf(2), modMul(Y1, Z1)); // Z3 = 2 * Y1 * Z1
+        BigInteger Z3 = modMul(TWO, modMul(Y1, Z1)); // Z3 = 2 * Y1 * Z1
 
         return new BigInteger[]{X3, Y3, Z3};
     }
@@ -72,7 +81,7 @@ public class Secp256k1EC {
         BigInteger H3 = modMul(H, H2);
         BigInteger V = modMul(X1, H2);
 
-        BigInteger X3 = modSub(modSub(modSqr(r), H3), modMul(BigInteger.valueOf(2), V));
+        BigInteger X3 = modSub(modSub(modSqr(r), H3), modMul(TWO, V));
         BigInteger Y3 = modSub(modMul(r, modSub(V, X3)), modMul(Y1, H3));
         BigInteger Z3 = modMul(Z1, H);
 
@@ -251,6 +260,8 @@ public class Secp256k1EC {
             BigInteger[] sumAffine = toAffine(sumJac[0], sumJac[1], sumJac[2]);
 
             table[i] = sumAffine;
+
+            lowBitPrecompute.put(pointToKey(sumAffine), BigInteger.valueOf(i + 1));
         }
 
         return table;
@@ -352,8 +363,8 @@ public class Secp256k1EC {
             BigInteger[] cubePoint = scalarMultiply(cubeScalar, GX, GY);
 
             // Store compressed keys and corresponding k
-            squarePrecompute.put(pointToKey(squarePoint), scalar);
-            cubePrecompute.put(pointToKey(cubePoint), scalar);
+            squarePrecompute.put(pointToKey(squarePoint), scalar.pow(2));
+            cubePrecompute.put(pointToKey(cubePoint), scalar.pow(3));
         }
         System.out.println("Square and cube precompute regions generated for range < " + maxRange);
     }
@@ -367,6 +378,8 @@ public class Secp256k1EC {
     // Base point G (secp256k1 generator)
     static final BigInteger GX = new BigInteger("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16);
     static final BigInteger GY = new BigInteger("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16);
+
+	private static final boolean VERBOSE = false;
 
     static class TreeNode {
         BigInteger x;          // Affine [x, y]
@@ -385,29 +398,69 @@ public class Secp256k1EC {
         }
     }
 
-    public static void checkNode(TreeNode node, String label) {
-        System.out.println(label + ": scalar = " + node.scalar);
-        System.out.println("Point:");
-        printPointExpanded(node.x, node.y);
+    public static boolean checkNode(TreeNode node, String label) {
+        //System.out.println("Point:");
+        //printPointExpanded(node.x, node.y);
 
-        String scalarStr = node.scalar.toString();
+        String compressedPoint = pointToKey(new BigInteger[] {node.x, node.y});
 
-        if (squarePrecompute.containsKey(scalarStr)) {
-            System.out.println("Found scalar in squarePrecompute with value: " + squarePrecompute.get(scalarStr));
+        if (VERBOSE) {
+        System.out.println(label + ": compressedPoint = " + compressedPoint);
+        }
+        if (squarePrecompute.containsKey(compressedPoint)) {
+            BigInteger k1 = squarePrecompute.get(compressedPoint);
+            System.out.println("Found scalar in squarePrecompute with value: " +
+            		squarePrecompute.get(compressedPoint));
+            System.out.println("branch pattern = " + node.branchPattern);
+            BigInteger recoveredScalar = recoverScalar(k1, node.branchPattern);
+
+            System.out.println("Recovered k: " + recoveredScalar);
+        	throw new SuccessException("found", recoveredScalar);
         } else {
+        	if (VERBOSE) {
             System.out.println("Scalar not found in squarePrecompute");
+            System.out.println("square precompute size: " +
+            		squarePrecompute.size());
+
+        	}
         }
 
-        if (cubePrecompute.containsKey(scalarStr)) {
-            System.out.println("Found scalar in cubePrecompute with value: " + cubePrecompute.get(scalarStr));
+        if (cubePrecompute.containsKey(compressedPoint)) {
+            BigInteger k1 = cubePrecompute.get(compressedPoint);
+            System.out.println("Found scalar in cubePrecompute with value: " +
+            		cubePrecompute.get(compressedPoint));
+            System.out.println("branch pattern = " + node.branchPattern);
+            BigInteger recoveredScalar = recoverScalar(k1, node.branchPattern);
+
+            System.out.println("Recovered k: " + recoveredScalar);
+        	throw new SuccessException("found", recoveredScalar);
         } else {
+        	if (VERBOSE) {
             System.out.println("Scalar not found in cubePrecompute");
+            System.out.println("cube precompute size: " +
+            		cubePrecompute.size());
+        	}
         }
+
+        if (lowBitPrecompute.containsKey(compressedPoint)) {
+            BigInteger k1 = lowBitPrecompute.get(compressedPoint);
+			System.out.println("Found scalar in lowBitPrecompute with value: " +
+            		k1);
+            System.out.println("branch pattern = " + node.branchPattern);
+            BigInteger recoveredScalar = recoverScalar(k1, node.branchPattern);
+			System.out.println("Recovered k: " +
+            		recoveredScalar);
+            	throw new SuccessException("found", recoveredScalar);
+        } else {
+        	if (VERBOSE) {
+            System.out.println("Scalar not found in lowBitPrecompute");
+            System.out.println("lowBitPrecompute precompute size: " +
+            		lowBitPrecompute.size());
+        	}
+        }
+        return false;
+
     }
-
-
-
-
 
     // Helper: scalarDivide and wrap into TreeNode
     public static TreeNode scalarDivideToNode(BigInteger divisor, BigInteger[] point) {
@@ -425,6 +478,27 @@ public class Secp256k1EC {
         //    this.point = result;
         //    this.scalar = recoveredScalarFinal != null ? recoveredScalarFinal : BigInteger.ZERO;
         //}};
+    }
+
+    // Method to parse the branch pattern and multiply BigInteger accordingly
+    public static BigInteger recoverScalar(BigInteger k1, String branchPattern) {
+        // Initialize the scalar to k1
+        BigInteger k = k1;
+
+        // Iterate over each character in the branch pattern
+        for (char ch : branchPattern.toCharArray()) {
+            if (ch == 'R') {
+                // If the character is 'R', we need to multiply by 2
+                k = k.multiply(BigInteger.valueOf(2));
+            } else if (ch == 'L') {
+                // If the character is 'R', we need to multiply by 2
+                k = k.multiply(BigInteger.valueOf(2));
+                k = k.add(BigInteger.ONE);
+            }
+            // Otherwise, if the character is not '-' (it's assumed to be 'R' in your pattern), we do nothing
+        }
+
+        return k;
     }
 
     public static TreeNode scalarDivideToNodeExpanded(BigInteger divisor, BigInteger x,
@@ -445,10 +519,26 @@ public class Secp256k1EC {
         //}};
     }
 
-    public static void buildAndCheckTree(TreeNode node, int depth) {
-        if (depth == 0) {
-            checkNode(node, "Leaf Node");
-            return;
+    static class SuccessException extends RuntimeException {
+    	public BigInteger getK() {
+			return k;
+		}
+
+		private BigInteger k;
+
+        public SuccessException(String message, BigInteger k) {
+            super(message);
+            this.k = k;
+        }
+    }
+
+    public static boolean buildAndCheckTree(TreeNode node) {
+//        if (depth == 0) {
+//            checkNode(node, "Leaf Node");
+//            return;
+//        }
+        if (node.depth >= MAX_DEPTH) {
+        	return false;
         }
 
         // Compute (k - 1)G
@@ -459,21 +549,30 @@ public class Secp256k1EC {
         BigInteger[] subtract1Affine = toAffine(subtract1Jac[0], subtract1Jac[1], subtract1Jac[2]);
 
         // Divide (k-1)G by 2
-        TreeNode leftChild = scalarDivideToNodeExpanded(BigInteger.valueOf(2), subtract1Affine[0], subtract1Affine[1]);
-        leftChild.depth = depth - 1;
+        TreeNode leftChild = scalarDivideToNodeExpanded(TWO, subtract1Affine[0], subtract1Affine[1]);
+        leftChild.depth = node.depth + 1;
         leftChild.branchPattern = node.branchPattern + "-L";
         checkNode(leftChild, "After (k-1)G / 2");
 
         // Divide kG by 2 (right child)
-        TreeNode rightChild = scalarDivideToNodeExpanded(BigInteger.valueOf(2), node.x, node.y);
-        rightChild.depth = depth - 1;
+        TreeNode rightChild = scalarDivideToNodeExpanded(TWO, node.x, node.y);
+        rightChild.depth = node.depth + 1;
         rightChild.branchPattern = node.branchPattern + "-R";
         checkNode(rightChild, "After kG / 2");
 
         // Recurse
-        buildAndCheckTree(leftChild, depth - 1);
-        buildAndCheckTree(rightChild, depth - 1);
+        boolean success = buildAndCheckTree(leftChild);
+        if (success) {
+        	throw new SuccessException("found", BigInteger.ZERO);
+        }
+        success = buildAndCheckTree(rightChild);
+        if (success) {
+        	throw new SuccessException("found", BigInteger.ZERO);
+        }
+        return false;
     }
+
+
 
 
     // Main for test
@@ -514,7 +613,7 @@ public class Secp256k1EC {
         testPointCompression();
         testModSqrtScalar();
 
-        int numLowBits = 16;
+        int numLowBits = LOW_BIT_COUNT_FOR_PRECOMPUTE;
         BigInteger[][] precomputedG = precomputeMultiples(GX, GY,
         		(int) (1L << numLowBits));
         System.out.println("Precomputed multiples of G ready, size: "
@@ -530,7 +629,7 @@ public class Secp256k1EC {
         BigInteger Gy = GY;
 
         BigInteger scalar140 = BigInteger.valueOf(140);
-        BigInteger scalar2 = BigInteger.valueOf(2);
+        BigInteger scalar2 = TWO;
 
         // Calculate 140G
         BigInteger[] point140G = scalarMultiply(scalar140, Gx, Gy);
@@ -599,7 +698,7 @@ public class Secp256k1EC {
             "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16);
 
         BigInteger scalar140 = BigInteger.valueOf(140);
-        BigInteger scalar2 = BigInteger.valueOf(2);
+        BigInteger scalar2 = TWO;
 
         // Calculate 141G
         BigInteger[] point140G = scalarMultiply(scalar140, Gx, Gy);
@@ -619,7 +718,7 @@ public class Secp256k1EC {
             System.out.println("Divided point: (" + dividedPoint[0].toString(16) + ", " + dividedPoint[1].toString(16) + ")");
             System.out.println("Expected 70G: (" + point70G[0].toString(16) + ", " + point70G[1].toString(16) + ")");
         }
-        testSquareCubePrecompute(4096);
+        testSquareCubePrecompute(4096*2);
     }
 
     public static void testSquareCubePrecompute(int maxRange) {
@@ -671,7 +770,7 @@ public class Secp256k1EC {
         if (allPassed) {
             System.out.println("All square and cube precompute tests PASSED for range < " + maxRange);
         }
-        testRecursiveTreeFromRandomScalar();
+        //precomputeMultiples();
     }
 
     public static void testRecursiveTreeFromRandomScalar() {
@@ -684,8 +783,9 @@ public class Secp256k1EC {
             k = new BigInteger(256, rand).mod(CURVE_ORDER);
         } while (k.signum() == 0); // avoid zero scalar
 
+        k = new BigInteger("8");
         System.out.println("Random scalar k = " + k);
-
+        {
         // Compute kG
         BigInteger[] point = scalarMultiply(k, GX, GY);
         System.out.println("kG:");
@@ -696,7 +796,33 @@ public class Secp256k1EC {
         //root.point = point; // Ensure consistency
 
         // Build and check tree with depth 2 (adjustable)
-        buildAndCheckTree(root, 80);
+        try {
+        	buildAndCheckTree(root);
+        } catch (SuccessException e) {
+        	System.out.println("SuccessException, k = " + e.getK());
+        }
+
+        k = new BigInteger("2").pow(16).add(new BigInteger("156234987"));
+        System.out.println("Random scalar k = " + k);
+        }
+
+        {
+        // Compute kG
+        BigInteger[] point = scalarMultiply(k, GX, GY);
+        System.out.println("kG:");
+        printPoint(point);
+
+        // Create tree node
+        TreeNode root = new TreeNode(point[0], point[1], 0, "");
+        //root.point = point; // Ensure consistency
+
+        // Build and check tree with depth 2 (adjustable)
+        try {
+        	buildAndCheckTree(root);
+        } catch (SuccessException e) {
+        	System.out.println("SuccessException, k = " + e.getK());
+        }
+        }
     }
 
 
