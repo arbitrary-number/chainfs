@@ -431,7 +431,7 @@ public class BigIntPolyFactorization {
     	//String[] lArray = new String[] {"2", "3", "5", "7", "11", "13"};
 
     	if (l == null) {
-    		l = new BigInteger("3");
+    		l = new BigInteger("7");
     	}
     	System.out.println("ℓ = " + l);   // strange l is a low prime
 
