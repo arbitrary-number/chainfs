@@ -3,6 +3,8 @@ import java.math.BigInteger;
 
 public class PolyBuilder {
 
+	private static final boolean PRINT_CONSTANTS = false;
+
 	public static BigInteger[] buildFl(BigInteger l, BigInteger t, BigInteger p) {
 	    BigInteger[] f = new BigInteger[3];
 
@@ -63,10 +65,12 @@ public class PolyBuilder {
         // t is normally unknown when creating secp256k1
         BigInteger t = p.add(BigInteger.ONE).subtract(N);
 
-        System.out.println("secp256k1 prime is: " + p.toString(16));
-        System.out.println("secp256k1 order is: " + N.toString(16));
-        System.out.println("secp256k1 t is: (p+1)-N");
-        System.out.println("secp256k1 t numeric is: " + t.toString(16));
+        if (PRINT_CONSTANTS) {
+        	System.out.println("secp256k1 prime is: " + p.toString(16));
+        	System.out.println("secp256k1 order is: " + N.toString(16));
+        	System.out.println("secp256k1 t is: (p+1)-N");
+        	System.out.println("secp256k1 t numeric is: " + t.toString(16));
+        }
         if (l == null) {
         	l = new BigInteger("11");  // 11 BigInteger.valueOf(11);
     	}

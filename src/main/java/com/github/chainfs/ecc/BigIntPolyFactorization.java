@@ -3,6 +3,7 @@ package com.github.chainfs.ecc;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BigIntPolyFactorization {
@@ -182,16 +183,29 @@ public class BigIntPolyFactorization {
     }
 
     // Compute x^{p^d} mod f using Frobenius map properties
-    static BigInteger[] polyPowModFrobenius(BigInteger[] base, BigInteger p, int d, BigInteger[] f, BigInteger prime) {
-        BigInteger[] result = base.clone();
+    //original with bug
+//    static BigInteger[] polyPowModFrobenius(BigInteger[] base, BigInteger p, int d, BigInteger[] f, BigInteger prime) {
+//        BigInteger[] result = base.clone();
+//
+//        for (int i = 0; i < d; i++) {
+//            // Raise coefficients to p-th power mod prime
+//            for (int j = 0; j < result.length; j++) {
+//                result[j] = result[j].modPow(p, prime);
+//            }
+//            // Raise polynomial to p-th power mod f
+//            result = polyPowMod(result, prime, f, prime);
+//        }
+//        return result;
+//    }
 
+    static BigInteger[] polyPowModFrobenius(BigInteger[] poly, BigInteger p, int d, BigInteger[] f, BigInteger prime) {
+        BigInteger[] result = poly.clone();
         for (int i = 0; i < d; i++) {
-            // Raise coefficients to p-th power mod prime
             for (int j = 0; j < result.length; j++) {
                 result[j] = result[j].modPow(p, prime);
             }
-            // Raise polynomial to p-th power mod f
-            result = polyPowMod(result, prime, f, prime);
+            // No further polynomial exponentiation needed here
+            result = polyMod(result, f, prime);
         }
         return result;
     }
@@ -389,6 +403,16 @@ public class BigIntPolyFactorization {
         System.out.println(sb.toString());
     }
 
+    public static void printFactorsProduct(List<BigInteger[]> factors) {
+        StringBuilder sb = new StringBuilder("f(x) = ");
+        for (BigInteger[] factor : factors) {
+            sb.append("(");
+            sb.append(polyToHexUTF8Smart(factor));
+            sb.append(")");
+        }
+        System.out.println(sb.toString());
+    }
+
     public static void main(String[] args) {
     	compute(null, null);
     }
@@ -407,7 +431,7 @@ public class BigIntPolyFactorization {
     	//String[] lArray = new String[] {"2", "3", "5", "7", "11", "13"};
 
     	if (l == null) {
-    		l = new BigInteger("5");
+    		l = new BigInteger("3");
     	}
     	System.out.println("ℓ = " + l);   // strange l is a low prime
 
@@ -444,7 +468,11 @@ public class BigIntPolyFactorization {
 //            BigInteger.ONE                    // x^3 term 1
 //        };
 
-        List<BigInteger[]> factors = fullFactorization(f, p);
+        List<BigInteger[]> factors = fullFactorization(f, l);  //p);
+
+        printFactorsProduct(factors);
+        // this does work, so looks like large numbers can be factored
+        // List<BigInteger[]> factors = fullFactorization(f, p);
 
 //        System.out.println("Factors:");
 //        for (BigInteger[] factor : factors) {
@@ -477,6 +505,22 @@ public class BigIntPolyFactorization {
                 elkies = true;
                 break;
             }
+        }
+
+        boolean hasRepeatedFactor = false;
+        for (int i = 0; i < factors.size() - 1; i++) {
+            for (int j = i + 1; j < factors.size(); j++) {
+                if (Arrays.equals(factors.get(i), factors.get(j))) {
+                    hasRepeatedFactor = true;
+                    break;
+                }
+            }
+            if (hasRepeatedFactor) break;
+        }
+
+        if (hasRepeatedFactor) {
+            System.out.println("Repeated factors found; ℓ = " + l + " should be considered Atkin.");
+            elkies = false;
         }
 
         //ArrayList<BigInteger> elkiesList = new ArrayList<BigInteger>();
